@@ -12,7 +12,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
 <style>
   body { overflow: hidden; }
-  .admin-main { overflow-y: auto; }
+  .admin-main { overflow-y: auto; height: 100vh; }
   .role-badge {
     display:inline-flex; align-items:center; gap:.375rem;
     padding:.25rem .75rem; border-radius:999px;
@@ -592,7 +592,8 @@ window.setView = (v) => {
   document.getElementById('viewTitle').textContent = v === 'overview' ? 'Dashboard Overview' : 'Visitor Log';
   const main = document.querySelector('.admin-main');
   if (v === 'log') {
-    document.querySelector('.table-wrap').scrollIntoView({ behavior: 'smooth' });
+    const table = document.querySelector('.table-wrap');
+    main.scrollTo({ top: table.offsetTop - 20, behavior: 'smooth' });
   } else {
     main.scrollTo({ top: 0, behavior: 'smooth' });
   }
