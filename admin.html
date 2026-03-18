@@ -73,11 +73,41 @@
       </button>
     </nav>
 
-    <div class="sidebar-footer">
-      <div id="adminInfo" style="padding:.5rem;font-size:.78rem;color:var(--muted);margin-bottom:.75rem;word-break:break-all;line-height:1.4;"></div>
-      <button class="nav-item" onclick="doLogout()" style="color:var(--err);">
-        <span class="nav-icon">🚪</span> Sign Out
+    <div class="sidebar-footer" style="position:relative;">
+      <!-- Profile button -->
+      <button id="profileBtn" onclick="toggleProfilePop()" style="
+        width:100%; display:flex; align-items:center; gap:.625rem;
+        padding:.6rem .75rem; border-radius:.5rem;
+        background:var(--surface2); border:1px solid var(--border);
+        cursor:pointer; transition:all .15s; text-align:left;
+      ">
+        <div id="profileAvatar" style="
+          width:30px; height:30px; border-radius:50%; flex-shrink:0;
+          background:var(--p); color:#fff;
+          display:flex; align-items:center; justify-content:center;
+          font-size:.8rem; font-weight:700;
+        ">?</div>
+        <div style="flex:1; min-width:0;">
+          <div id="profileName" style="font-size:.8rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+          <div id="profileEmail" style="font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        </div>
+        <span style="color:var(--muted);font-size:.7rem;">▲</span>
       </button>
+
+      <!-- Popover -->
+      <div id="profilePop" style="
+        display:none; position:absolute; bottom:calc(100% + .5rem); left:0; right:0;
+        background:var(--surface); border:1px solid var(--border);
+        border-radius:.75rem; box-shadow:0 8px 24px var(--shadow);
+        padding:.75rem; z-index:400;
+      ">
+        <div style="font-size:.75rem;color:var(--muted);margin-bottom:.5rem;padding:0 .25rem;">Signed in as</div>
+        <div id="popName" style="font-size:.875rem;font-weight:700;color:var(--text);padding:0 .25rem;margin-bottom:.15rem;"></div>
+        <div id="popEmail" style="font-size:.75rem;color:var(--muted);padding:0 .25rem;word-break:break-all;margin-bottom:.75rem;"></div>
+        <button class="nav-item" onclick="doLogout()" style="color:var(--err);width:100%;">
+          <span class="nav-icon">🚪</span> Sign Out
+        </button>
+      </div>
     </div>
   </aside>
 
@@ -278,8 +308,16 @@ onAuthStateChanged(auth, async user => {
     if (role !== 'admin') { window.location.href = 'checkin.html'; return; }
     adminUser = user;
     const data = await getUserData(user.uid);
-    document.getElementById('adminInfo').innerHTML =
-      `<b>${data?.firstName || ''} ${data?.lastName || ''}</b><br>${user.email}`;
+    const firstName = data?.firstName || '';
+    const lastName  = data?.lastName  || '';
+    const fullName  = `${firstName} ${lastName}`.trim() || 'Admin';
+    const initials  = ((firstName[0] || '') + (lastName[0] || '')).toUpperCase() || 'A';
+
+    document.getElementById('profileAvatar').textContent = initials;
+    document.getElementById('profileName').textContent   = fullName;
+    document.getElementById('profileEmail').textContent  = user.email;
+    document.getElementById('popName').textContent       = fullName;
+    document.getElementById('popEmail').textContent      = user.email;
     loadData();
   } catch(e) {
     toast('err','Access Denied', e.message);
@@ -602,6 +640,20 @@ window.setView = (v) => {
 window.toggleSidebar = () => {
   document.getElementById('sidebar').classList.toggle('open');
 };
+
+window.toggleProfilePop = () => {
+  const pop = document.getElementById('profilePop');
+  pop.style.display = pop.style.display === 'none' ? 'block' : 'none';
+};
+
+// Close popover when clicking outside
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('profileBtn')?.contains(e.target) &&
+      !document.getElementById('profilePop')?.contains(e.target)) {
+    const pop = document.getElementById('profilePop');
+    if (pop) pop.style.display = 'none';
+  }
+});
 
 // ── Export PDF ────────────────────────────────────────────
 window.exportPDF = () => {

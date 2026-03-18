@@ -43,10 +43,21 @@
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:.75rem;">
-    <div class="clock" id="clock"></div>
     <div id="themeBar" class="theme-bar" style="position:static;box-shadow:none;background:transparent;border:none;padding:0;backdrop-filter:none;"></div>
   </div>
 </div>
+
+<!-- ── DateTime Bar ───────────────────────────────────────── -->
+<div style="
+  background:var(--surface2); border-bottom:1px solid var(--border);
+  padding:.5rem 1.5rem; display:flex; align-items:center; justify-content:center;
+  gap:1.25rem; flex-wrap:wrap;
+">
+  <span id="clockDate" style="font-size:.85rem;font-weight:600;color:var(--text2);"></span>
+  <span style="color:var(--border);font-size:.9rem;">|</span>
+  <span id="clockTime" style="font-size:.95rem;font-weight:700;color:var(--p);font-variant-numeric:tabular-nums;letter-spacing:.02em;"></span>
+</div>
+
 <div id="toasts"></div>
 
 <!-- ── Body ───────────────────────────────────────────────── -->
@@ -118,8 +129,15 @@
       <div style="margin-top:1.25rem;padding:1rem;background:var(--p-10);border-radius:var(--radius);font-size:.875rem;color:var(--p);font-weight:600;">
         Welcome to NEU Library! Enjoy your visit.
       </div>
-      <button class="btn btn-ghost btn-full new-checkin-btn" onclick="resetCheckin()">
-        Done (Back to Home)
+      <!-- Auto-logout countdown -->
+      <div id="countdownWrap" style="margin-top:1rem;font-size:.82rem;color:var(--muted);text-align:center;">
+        Logging out in <span id="countdownNum" style="font-weight:700;color:var(--err);">8</span>s…
+        <div style="margin-top:.4rem;height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+          <div id="countdownBar" style="height:100%;background:var(--err);width:100%;transition:width 1s linear;"></div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-full new-checkin-btn" onclick="cancelCountdownAndReset()">
+        ✋ Stay (Another Check-In)
       </button>
     </div>
 
@@ -139,12 +157,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/f
 const { mode, palette } = initTheme();
 buildThemeBar(mode, palette);
 
-// Clock
+// Clock with seconds
 function tick() {
   const now = new Date();
-  document.getElementById('clock').textContent =
-    now.toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric'}) + ' • ' +
-    now.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('clockDate').textContent =
+    now.toLocaleDateString('en-PH', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  document.getElementById('clockTime').textContent =
+    now.toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true });
 }
 tick(); setInterval(tick, 1000);
 
@@ -261,6 +280,8 @@ window.doCheckin = async () => {
   }
 };
 
+let countdownTimer = null;
+
 function showSuccess(reason) {
   const fn = profileData.firstName || '';
   const ln = profileData.lastName  || '';
@@ -272,25 +293,57 @@ function showSuccess(reason) {
   document.querySelectorAll(
     '.welcome-banner, .section-head, .reason-grid, .others-box, #checkinErr, #btnCheckin'
   ).forEach(el => el.style.display = 'none');
+  // Also hide sign out button during success
+  document.querySelector('button[onclick="doLogout()"]').style.display = 'none';
   document.getElementById('successScreen').classList.add('show');
 
   toast('ok','Checked In!', 'Your visit has been recorded.');
+
+  // Auto-logout countdown (8 seconds)
+  let secs = 8;
+  document.getElementById('countdownNum').textContent = secs;
+  document.getElementById('countdownBar').style.width = '100%';
+  // trigger the CSS transition
+  setTimeout(() => {
+    document.getElementById('countdownBar').style.width = '0%';
+    document.getElementById('countdownBar').style.transition = `width ${secs}s linear`;
+  }, 50);
+
+  countdownTimer = setInterval(async () => {
+    secs--;
+    document.getElementById('countdownNum').textContent = secs;
+    if (secs <= 0) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+      await logout();
+      window.location.href = 'index.html';
+    }
+  }, 1000);
 }
 
+window.cancelCountdownAndReset = () => {
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+  resetCheckin();
+};
+
 window.resetCheckin = () => {
-  // Reset form
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
   selectedReason = '';
   document.querySelectorAll('.reason-tile').forEach(t => t.classList.remove('active'));
   document.getElementById('othersText').value = '';
   document.getElementById('othersBox').classList.remove('show');
 
-  // Show form, hide success
   document.querySelectorAll(
     '.welcome-banner, .section-head, .reason-grid, #btnCheckin'
   ).forEach(el => el.style.display = '');
+  // Show sign out button again
+  document.querySelector('button[onclick="doLogout()"]').style.display = '';
   const btn = document.getElementById('btnCheckin');
   btn.disabled = false; btn.innerHTML = '✅ &nbsp;Confirm Check-In';
   document.getElementById('successScreen').classList.remove('show');
+  // Reset countdown bar
+  document.getElementById('countdownBar').style.transition = 'none';
+  document.getElementById('countdownBar').style.width = '100%';
 };
 
 window.doLogout = async () => {
