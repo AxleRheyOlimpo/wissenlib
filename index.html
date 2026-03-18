@@ -292,7 +292,7 @@
           </div>
           <div class="err-msg" id="errEmail">Must be an @neu.edu.ph address</div>
         </div>
-        <div class="field">
+        <div class="field" id="passSection">
           <label for="rPass">Password <span style="color:var(--muted);font-weight:400;">(min. 8 characters)</span></label>
           <div class="inp-icon-wrap" style="position:relative;">
             <span class="inp-icon">🔒</span>
@@ -304,7 +304,7 @@
           <div class="strength-bar" id="strengthBar" style="background:var(--border);"></div>
           <div style="font-size:.75rem;color:var(--muted);margin-top:.25rem;" id="strengthLabel"></div>
         </div>
-        <div class="field">
+        <div class="field" id="confirmSection">
           <label for="rConfirm">Confirm Password</label>
           <div class="inp-icon-wrap" style="position:relative;">
             <span class="inp-icon">🔒</span>
@@ -342,7 +342,7 @@
 import { initTheme, buildThemeBar } from './js/theme.js';
 import {
   loginWithGoogle, loginWithCredentials,
-  lookupByRFID, registerUser,
+  lookupByRFID, registerUser, createUserDocOnly,
   getUserRole, onAuthChange, logout
 } from './js/auth.js';
 import { DEPARTMENTS } from './js/firebase-config.js';
@@ -352,7 +352,11 @@ const { mode, palette } = initTheme();
 buildThemeBar(mode, palette);
 
 // ── If already logged in, redirect ──────────────────────────
+let googleLoginPending = false; // blocks onAuthChange during Google popup
+let pendingGoogleUser  = null;  // stores Google user awaiting registration
+
 onAuthChange(async user => {
+  if (googleLoginPending) return; // wait for Google login flow to finish
   if (!user) return;
   try {
     const role = await getUserRole(user.uid);
@@ -468,23 +472,34 @@ window.doLogin = async () => {
 };
 
 window.doGoogleLogin = async () => {
+  googleLoginPending = true;
   try {
     await loginWithGoogle();
+    // Success — let onAuthChange handle redirect
+    googleLoginPending = false;
   } catch (e) {
     if (e.message === 'NO_ACCOUNT') {
-      // No account found — switch to register tab and pre-fill fields
+      // Keep googleLoginPending = true so onAuthChange doesn't redirect
+      // It will be reset to false only after registration completes
+      pendingGoogleUser = { uid: e.uid, email: e.email, firstName: e.firstName, lastName: e.lastName };
+
       switchPanel('register');
       goStep(1);
-      // Pre-fill name if available
+
       if (e.firstName) document.getElementById('rFirst').value = e.firstName;
       if (e.lastName)  document.getElementById('rLast').value  = e.lastName;
-      // Pre-fill and lock email on step 3
+
       const emailInp = document.getElementById('rEmail');
       emailInp.value    = e.email;
       emailInp.readOnly = true;
       emailInp.style.background = 'var(--surface2)';
-      showToast('info', 'Almost there!', 'No account found for this email. Please complete your registration.');
+
+      document.getElementById('passSection').style.display = 'none';
+      document.getElementById('confirmSection').style.display = 'none';
+
+      showToast('info', 'Almost there!', 'Fill in your details to complete registration.');
     } else {
+      googleLoginPending = false;
       showToast('err', 'Sign-in Failed', e.message);
     }
   }
@@ -656,25 +671,46 @@ window.doRegister = async () => {
   if (!email.toLowerCase().endsWith('@neu.edu.ph')) {
     emailErr.classList.add('show'); return;
   }
-  if (pass.length < 8) { showErr(err, 'Password must be at least 8 characters.'); return; }
-  if (pass !== confirm){ showErr(err, 'Passwords do not match.'); return; }
+
+  // Only require password if not coming from Google
+  if (!pendingGoogleUser) {
+    if (pass.length < 8) { showErr(err, 'Password must be at least 8 characters.'); return; }
+    if (pass !== confirm){ showErr(err, 'Passwords do not match.'); return; }
+  }
 
   const btn = document.getElementById('btnRegister');
   setLoading(btn, true);
 
   try {
-    await registerUser({
-      email,
-      password:      pass,
-      studentId:     document.getElementById('rStudentId').value,
-      firstName:     document.getElementById('rFirst').value.trim(),
-      lastName:      document.getElementById('rLast').value.trim(),
-      middleInitial: document.getElementById('rMI').value.trim(),
-      department:    document.getElementById('rDept').value,
-      program:       document.getElementById('rProg').value,
-      isEmployee:    document.getElementById('rIsEmployee').checked,
-      rfidId:        document.getElementById('rRfid').value.trim() || null
-    });
+    if (pendingGoogleUser) {
+      // Google user — just create Firestore doc, Firebase Auth already exists
+      await createUserDocOnly(pendingGoogleUser.uid, {
+        email,
+        studentId:     document.getElementById('rStudentId').value,
+        firstName:     document.getElementById('rFirst').value.trim(),
+        lastName:      document.getElementById('rLast').value.trim(),
+        middleInitial: document.getElementById('rMI').value.trim(),
+        department:    document.getElementById('rDept').value,
+        program:       document.getElementById('rProg').value,
+        isEmployee:    document.getElementById('rIsEmployee').checked,
+        rfidId:        document.getElementById('rRfid').value.trim() || null
+      });
+      pendingGoogleUser = null;
+      googleLoginPending = false;
+    } else {
+      await registerUser({
+        email,
+        password:      pass,
+        studentId:     document.getElementById('rStudentId').value,
+        firstName:     document.getElementById('rFirst').value.trim(),
+        lastName:      document.getElementById('rLast').value.trim(),
+        middleInitial: document.getElementById('rMI').value.trim(),
+        department:    document.getElementById('rDept').value,
+        program:       document.getElementById('rProg').value,
+        isEmployee:    document.getElementById('rIsEmployee').checked,
+        rfidId:        document.getElementById('rRfid').value.trim() || null
+      });
+    }
     showToast('ok', 'Account Created!', 'Welcome to WissenLib. Signing you in…');
     // redirect via onAuthChange
   } catch (e) {

@@ -29,15 +29,15 @@ export async function loginWithGoogle() {
     throw new Error('Only @neu.edu.ph accounts are allowed.');
   }
 
-  // Check if user doc already exists
+  // Check if Firestore user doc exists
   const ref  = doc(db, 'users', user.uid);
   const snap = await getDoc(ref);
 
   if (!snap.exists()) {
-    // No account — sign out and signal the caller to redirect to register
-    await signOut(auth);
+    // No account — do NOT sign out, keep Google session for registration
     const err = new Error('NO_ACCOUNT');
     err.email     = user.email;
+    err.uid       = user.uid;
     err.firstName = (user.displayName || '').split(' ')[0] || '';
     err.lastName  = (user.displayName || '').split(' ').slice(1).join(' ') || '';
     throw err;
@@ -55,6 +55,29 @@ export async function loginWithGoogle() {
   }
 
   return user;
+}
+
+// ── Create Firestore doc only (for Google-registered users) ──────────
+export async function createUserDocOnly(uid, {
+  email, studentId, firstName, lastName, middleInitial,
+  department, program, isEmployee, rfidId
+}) {
+  const cleanEmail = email.trim().toLowerCase();
+  const isAdmin = ADMIN_EMAILS.includes(cleanEmail);
+
+  await setDoc(doc(db, 'users', uid), {
+    uid, email: cleanEmail,
+    studentId:     studentId?.trim()     || '',
+    firstName:     firstName.trim(),
+    lastName:      lastName.trim(),
+    middleInitial: middleInitial?.trim() || '',
+    department, program,
+    isEmployee:    !!isEmployee,
+    rfidId:        rfidId?.trim()        || null,
+    role:          isAdmin ? 'admin' : 'visitor',
+    blocked:       false,
+    createdAt:     new Date().toISOString()
+  });
 }
 
 // ── Email / StudentID + Password sign-in ────────────────────────────
