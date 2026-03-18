@@ -2,7 +2,7 @@
 
 A web-based visitor log system for the New Era University Library, built with vanilla JavaScript (ES Modules), Firebase Authentication, and Cloud Firestore.
 
-🔗 **Live Application:** _[Add your Firebase Hosting URL here after deployment]_
+🔗 **Live Application:** https://wissenlib-neu.web.app/
 
 ---
 
