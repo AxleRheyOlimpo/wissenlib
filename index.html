@@ -181,7 +181,17 @@
       <div class="method-panel" id="regStep3">
         <p class="section-head">Step 3 of 3 — Account</p>
 
-        <div class="field">
+        <!-- Google verified indicator (shown only in Google reg mode) -->
+        <div id="googleVerifiedBanner" class="hidden" style="
+          display:flex; align-items:center; gap:.5rem;
+          background:#DCFCE7; border:1px solid #16A34A;
+          border-radius:var(--radius-sm); padding:.5rem .875rem;
+          margin-bottom:.75rem; font-size:.8rem; font-weight:600; color:#15803D;
+        ">
+          ✔ Email verified via Google — <span id="googleVerifiedEmail" style="font-weight:400;"></span>
+        </div>
+
+        <div class="field" id="emailSection">
           <label for="rEmail">Institutional Email</label>
           <div class="inp-icon-wrap">
             <span class="inp-icon">✉️</span>
@@ -217,16 +227,6 @@
           <button class="btn btn-primary btn-full" id="btnRegister" onclick="doRegister()">Create Account</button>
         </div>
 
-        <div class="divider" style="margin:.875rem 0 .75rem;">or</div>
-        <button class="btn btn-google" onclick="doGoogleLogin()">
-          <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg>
-          Register with Google
-        </button>
       </div>
 
     </div><!-- /panelRegister -->
@@ -237,9 +237,10 @@
 <!-- ── Script ─────────────────────────────────────────────── -->
 <script type="module">
 import { initTheme, buildThemeBar } from './js/theme.js';
+import { auth } from './js/firebase-config.js';
 import {
   loginWithGoogle, loginWithCredentials,
-  registerUser,
+  registerUser, createUserDocOnly,
   getUserRole, getUserData, onAuthChange, logout
 } from './js/auth.js';
 import { DEPARTMENTS } from './js/firebase-config.js';
@@ -343,6 +344,13 @@ window.switchPanel = (p) => {
     document.getElementById('tab' + (n === 'login' ? 'Login' : 'Reg'))
       .classList.toggle('active', n === p);
   });
+  // Reset Google mode if switching away from register
+  if (p === 'login' && pendingGoogleUser) {
+    logout();
+    pendingGoogleUser  = null;
+    googleLoginPending = false;
+    resetGoogleRegMode();
+  }
 };
 
 // ── REGISTER ─────────────────────────────────────────────────
@@ -372,31 +380,26 @@ window.doGoogleLogin = async () => {
     googleLoginPending = false;
   } catch (e) {
     if (e.message === 'NO_ACCOUNT') {
+      // Keep Google session — user is authenticated, just needs profile completion
       pendingGoogleUser = { uid: e.uid, email: e.email };
 
-      // Better name parsing: first word = first name, last word = last name, MI left blank
       const parts = (e.firstName + (e.lastName ? ' ' + e.lastName : '')).trim().split(/\s+/);
       const firstName = parts[0] || '';
       const lastName  = parts.length > 1 ? parts[parts.length - 1] : '';
 
-      // If already on step 3, just fill email and stay — otherwise go to step 1
-      if (currentStep === 3) {
-        const emailInp = document.getElementById('rEmail');
-        emailInp.value    = e.email;
-        emailInp.readOnly = true;
-        emailInp.style.background = 'var(--surface2)';
-        showToast('info', 'Email pre-filled!', 'Set a password to complete registration.');
-      } else {
-        switchPanel('register');
-        goStep(1);
-        document.getElementById('rFirst').value = firstName;
-        document.getElementById('rLast').value  = lastName;
-        const emailInp = document.getElementById('rEmail');
-        emailInp.value    = e.email;
-        emailInp.readOnly = true;
-        emailInp.style.background = 'var(--surface2)';
-        showToast('info', 'Almost there!', 'Fill in your details to complete registration.');
-      }
+      // Go to register, start at step 1 with pre-filled name
+      switchPanel('register');
+      goStep(1);
+      document.getElementById('rFirst').value = firstName;
+      document.getElementById('rLast').value  = lastName;
+
+      // On step 3: show verified badge, hide only the email field (keep password)
+      document.getElementById('googleVerifiedBanner').classList.remove('hidden');
+      document.getElementById('googleVerifiedEmail').textContent = e.email;
+      document.getElementById('emailSection').style.display = 'none';
+      document.getElementById('btnRegister').textContent = 'Complete Registration';
+
+      showToast('info', 'Almost there!', 'Fill in your remaining details to complete registration.');
     } else {
       googleLoginPending = false;
       showToast('err', 'Sign-in Failed', e.message);
@@ -471,41 +474,68 @@ function goStep(n) {
 }
 
 window.doRegister = async () => {
-  const email   = document.getElementById('rEmail').value.trim();
-  const pass    = document.getElementById('rPass').value;
-  const confirm = document.getElementById('rConfirm').value;
   const err     = document.getElementById('errStep3');
   const emailErr= document.getElementById('errEmail');
   emailErr.classList.remove('show');
   err.classList.remove('show');
 
-  if (!email.toLowerCase().endsWith('@neu.edu.ph')) {
-    emailErr.classList.add('show'); return;
-  }
-
-  // Always require password
-  if (pass.length < 8) { showErr(err, 'Password must be at least 8 characters.'); return; }
-  if (pass !== confirm){ showErr(err, 'Passwords do not match.'); return; }
+  const commonFields = {
+    studentId:     document.getElementById('rStudentId').value,
+    firstName:     document.getElementById('rFirst').value.trim(),
+    lastName:      document.getElementById('rLast').value.trim(),
+    middleInitial: document.getElementById('rMI').value.trim(),
+    department:    document.getElementById('rDept').value,
+    program:       document.getElementById('rProg').value,
+    isEmployee:    document.getElementById('rIsEmployee').checked,
+    rfidId:        null
+  };
 
   const btn = document.getElementById('btnRegister');
   setLoading(btn, true);
 
   try {
-    await registerUser({
-      email,
-      password:      pass,
-      studentId:     document.getElementById('rStudentId').value,
-      firstName:     document.getElementById('rFirst').value.trim(),
-      lastName:      document.getElementById('rLast').value.trim(),
-      middleInitial: document.getElementById('rMI').value.trim(),
-      department:    document.getElementById('rDept').value,
-      program:       document.getElementById('rProg').value,
-      isEmployee:    document.getElementById('rIsEmployee').checked,
-      rfidId:        null
-    });
-    pendingGoogleUser  = null;
-    googleLoginPending = false;
-    showToast('ok', 'Account Created!', 'Welcome to WissenLib. Signing you in…');
+    if (pendingGoogleUser) {
+      // Validate password
+      const pass    = document.getElementById('rPass').value;
+      const confirm = document.getElementById('rConfirm').value;
+      if (pass.length < 8) { showErr(err, 'Password must be at least 8 characters.'); setLoading(btn, false); return; }
+      if (pass !== confirm){ showErr(err, 'Passwords do not match.'); setLoading(btn, false); return; }
+
+      // Link email+password credential to the existing Google account
+      const { EmailAuthProvider, linkWithCredential } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+      const credential = EmailAuthProvider.credential(pendingGoogleUser.email, pass);
+      await linkWithCredential(auth.currentUser, credential);
+
+      // Save Firestore doc
+      await createUserDocOnly(pendingGoogleUser.uid, {
+        email: pendingGoogleUser.email,
+        ...commonFields
+      });
+      pendingGoogleUser  = null;
+      googleLoginPending = false;
+      showToast('ok', 'Account Created!', 'Welcome to WissenLib. Signing you in…');
+      const role = await getUserRole(auth.currentUser.uid);
+      if (role === 'admin') {
+        showAdminChoice(auth.currentUser);
+      } else {
+        window.location.href = 'checkin.html';
+      }
+    } else {
+      // Normal email/password registration
+      const email   = document.getElementById('rEmail').value.trim();
+      const pass    = document.getElementById('rPass').value;
+      const confirm = document.getElementById('rConfirm').value;
+
+      if (!email.toLowerCase().endsWith('@neu.edu.ph')) {
+        emailErr.classList.add('show'); setLoading(btn, false); return;
+      }
+      if (pass.length < 8) { showErr(err, 'Password must be at least 8 characters.'); setLoading(btn, false); return; }
+      if (pass !== confirm){ showErr(err, 'Passwords do not match.'); setLoading(btn, false); return; }
+
+      await registerUser({ email, password: pass, ...commonFields });
+      showToast('ok', 'Account Created!', 'Welcome to WissenLib. Signing you in…');
+      // redirect via onAuthChange
+    }
   } catch (e) {
     showErr(err, e.message);
     setLoading(btn, false);
@@ -513,6 +543,16 @@ window.doRegister = async () => {
 };
 
 // ── Helpers ──────────────────────────────────────────────────
+function resetGoogleRegMode() {
+  document.getElementById('googleVerifiedBanner').classList.add('hidden');
+  document.getElementById('emailSection').style.display = '';
+  document.getElementById('btnRegister').textContent = 'Create Account';
+  const emailInp = document.getElementById('rEmail');
+  emailInp.value    = '';
+  emailInp.readOnly = false;
+  emailInp.style.background = '';
+}
+
 window.fmtStudentId = (inp) => {
   let v = inp.value.replace(/\D/g,'');
   if (v.length > 2)  v = v.slice(0,2) + '-' + v.slice(2);

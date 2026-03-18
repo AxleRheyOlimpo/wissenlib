@@ -170,7 +170,6 @@ tick(); setInterval(tick, 1000);
 // Auth guard
 let currentUser = null;
 let profileData = null;
-let selectedReason = '';
 
 // Check if admin is explicitly choosing visitor mode via URL param
 const isAdminVisitor = new URLSearchParams(window.location.search).get('mode') === 'visitor';
@@ -217,12 +216,26 @@ function renderWelcome() {
     [profileData.program, profileData.department].filter(Boolean).join(' · ');
 }
 
-// Reason selection
+// Reason selection — multiple allowed
+let selectedReasons = new Set();
+
 window.selectReason = (el, reason) => {
-  document.querySelectorAll('.reason-tile').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  selectedReason = reason;
-  document.getElementById('othersBox').classList.toggle('show', reason === 'Others');
+  if (reason === 'Others') {
+    el.classList.toggle('active');
+    if (el.classList.contains('active')) {
+      selectedReasons.add(reason);
+    } else {
+      selectedReasons.delete(reason);
+    }
+  } else {
+    el.classList.toggle('active');
+    if (el.classList.contains('active')) {
+      selectedReasons.add(reason);
+    } else {
+      selectedReasons.delete(reason);
+    }
+  }
+  document.getElementById('othersBox').classList.toggle('show', selectedReasons.has('Others'));
   document.getElementById('checkinErr').style.display = 'none';
 };
 
@@ -236,20 +249,22 @@ window.doCheckin = async () => {
     errEl.style.display = 'block'; return;
   }
 
-  if (!selectedReason) {
-    errEl.textContent = 'Please select a reason for your visit.';
+  if (selectedReasons.size === 0) {
+    errEl.textContent = 'Please select at least one reason for your visit.';
     errEl.style.display = 'block'; return;
   }
 
-  let reason = selectedReason;
-  if (reason === 'Others') {
+  let reasons = Array.from(selectedReasons);
+  if (reasons.includes('Others')) {
     const txt = document.getElementById('othersText').value.trim();
     if (!txt) {
       errEl.textContent = 'Please describe your reason for visiting.';
       errEl.style.display = 'block'; return;
     }
-    reason = 'Others: ' + txt;
+    reasons = reasons.filter(r => r !== 'Others');
+    reasons.push('Others: ' + txt);
   }
+  const reasonForVisit = reasons.join(', ');
 
   const btn = document.getElementById('btnCheckin');
   btn.disabled = true;
@@ -270,13 +285,13 @@ window.doCheckin = async () => {
       department:   profileData.department   || '',
       program:      profileData.program      || '',
       isEmployee:   profileData.isEmployee   || false,
-      reasonForVisit: reason,
+      reasonForVisit: reasonForVisit,
       date,
       checkInTime:  serverTimestamp(),
       checkInTimeISO: now.toISOString()
     });
 
-    showSuccess(reason);
+    showSuccess(reasonForVisit);
   } catch(e) {
     errEl.textContent = 'Error saving check-in: ' + e.message;
     errEl.style.display = 'block';
@@ -333,7 +348,7 @@ window.cancelCountdownAndReset = () => {
 
 window.resetCheckin = () => {
   if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-  selectedReason = '';
+  selectedReasons.clear();
   document.querySelectorAll('.reason-tile').forEach(t => t.classList.remove('active'));
   document.getElementById('othersText').value = '';
   document.getElementById('othersBox').classList.remove('show');
