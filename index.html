@@ -471,7 +471,22 @@ window.doGoogleLogin = async () => {
   try {
     await loginWithGoogle();
   } catch (e) {
-    showToast('err', 'Sign-in Failed', e.message);
+    if (e.message === 'NO_ACCOUNT') {
+      // No account found — switch to register tab and pre-fill fields
+      switchPanel('register');
+      goStep(1);
+      // Pre-fill name if available
+      if (e.firstName) document.getElementById('rFirst').value = e.firstName;
+      if (e.lastName)  document.getElementById('rLast').value  = e.lastName;
+      // Pre-fill and lock email on step 3
+      const emailInp = document.getElementById('rEmail');
+      emailInp.value    = e.email;
+      emailInp.readOnly = true;
+      emailInp.style.background = 'var(--surface2)';
+      showToast('info', 'Almost there!', 'No account found for this email. Please complete your registration.');
+    } else {
+      showToast('err', 'Sign-in Failed', e.message);
+    }
   }
 };
 

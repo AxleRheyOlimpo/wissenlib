@@ -29,7 +29,31 @@ export async function loginWithGoogle() {
     throw new Error('Only @neu.edu.ph accounts are allowed.');
   }
 
-  await ensureUserDoc(user);
+  // Check if user doc already exists
+  const ref  = doc(db, 'users', user.uid);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    // No account — sign out and signal the caller to redirect to register
+    await signOut(auth);
+    const err = new Error('NO_ACCOUNT');
+    err.email     = user.email;
+    err.firstName = (user.displayName || '').split(' ')[0] || '';
+    err.lastName  = (user.displayName || '').split(' ').slice(1).join(' ') || '';
+    throw err;
+  }
+
+  // Existing account — proceed
+  const isAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase());
+  const d = snap.data();
+  if (isAdmin && d.role !== 'admin') {
+    await updateDoc(ref, { role: 'admin' });
+  }
+  if (d.blocked) {
+    await signOut(auth);
+    throw new Error('Your account has been blocked. Contact the library administrator.');
+  }
+
   return user;
 }
 
