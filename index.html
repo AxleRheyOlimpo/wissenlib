@@ -68,14 +68,8 @@
     <!-- ══ LOGIN PANEL ══════════════════════════════════════ -->
     <div class="form-panel active" id="panelLogin">
 
-      <!-- Sub-method tabs -->
-      <div class="method-tabs">
-        <button class="method-tab active" onclick="switchMethod('cred')" id="mtCred">🔑 Email / ID</button>
-        <button class="method-tab"        onclick="switchMethod('rfid')" id="mtRfid">📡 RFID Card</button>
-      </div>
-
       <!-- Email/ID method -->
-      <div class="method-panel active" id="mpCred">
+      <div id="mpCred">
         <div class="field">
           <label for="loginInput">Student ID or Institutional Email</label>
           <div class="inp-icon-wrap">
@@ -98,92 +92,6 @@
         <button class="btn btn-primary btn-full mt-2" id="btnLogin" onclick="doLogin()">
           Sign In
         </button>
-      </div>
-
-      <!-- RFID method -->
-      <div class="method-panel" id="mpRfid">
-        <div class="rfid-zone" id="rfidZone" onclick="activateRFID()">
-          <span class="rfid-icon rfid-pulse" id="rfidIcon">📡</span>
-          <div class="rfid-label" id="rfidLabel">Tap your RFID card</div>
-          <div class="rfid-hint" id="rfidHint">Click here, then tap your card on the reader</div>
-        </div>
-        <!-- Hidden input that captures RFID keystrokes -->
-        <input id="rfidCapture" type="text" class="hidden" autocomplete="off"
-          placeholder="RFID input (hidden)" aria-label="RFID capture" />
-
-        <!-- Profile card shown after successful RFID scan -->
-        <div id="rfidEmailRow" class="hidden" style="margin-top:1rem;">
-
-          <!-- ID card-style profile preview -->
-          <div id="rfidCard" style="
-            background: var(--surface2);
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-          ">
-            <!-- Avatar circle with initials -->
-            <div id="rfidAvatar" style="
-              width: 52px; height: 52px; border-radius: 50%;
-              background: var(--accent); color: #fff;
-              display: flex; align-items: center; justify-content: center;
-              font-size: 1.3rem; font-weight: 700; flex-shrink: 0;
-              letter-spacing: .5px;
-            ">??</div>
-
-            <div style="flex:1; min-width:0;">
-              <!-- Full name -->
-              <div id="rfidFullName" style="font-weight:700; font-size:1rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
-              <!-- Student ID -->
-              <div id="rfidStudentId" style="font-size:.82rem; color:var(--muted); margin-top:.1rem; font-family: monospace; letter-spacing:.5px;"></div>
-              <!-- Department & Program -->
-              <div id="rfidDeptProg" style="font-size:.8rem; color:var(--muted); margin-top:.25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
-              <!-- Badge row -->
-              <div style="margin-top:.4rem; display:flex; gap:.4rem; flex-wrap:wrap;">
-                <span id="rfidTypeBadge" style="
-                  display:inline-block; font-size:.7rem; font-weight:600;
-                  padding:.15rem .55rem; border-radius:999px;
-                  background:var(--accent); color:#fff;
-                "></span>
-                <span id="rfidEmailBadge" style="
-                  display:inline-block; font-size:.7rem;
-                  padding:.15rem .55rem; border-radius:999px;
-                  background:var(--surface); color:var(--muted);
-                  border:1px solid var(--border);
-                  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;
-                "></span>
-              </div>
-            </div>
-
-            <!-- Small tap-again link -->
-            <button onclick="resetRFID()" title="Tap a different card" style="
-              background:none; border:none; cursor:pointer;
-              color:var(--muted); font-size:.75rem; flex-shrink:0;
-              text-decoration:underline;
-            ">change</button>
-          </div>
-
-          <!-- Hidden email used for auth -->
-          <input id="rfidEmail" type="hidden" />
-
-          <!-- Password -->
-          <div class="field">
-            <label for="rfidPass">Password</label>
-            <div class="inp-icon-wrap" style="position:relative;">
-              <span class="inp-icon">🔒</span>
-              <input class="inp" id="rfidPass" type="password" placeholder="Enter your password"
-                autocomplete="current-password" />
-              <button type="button" onclick="togglePw('rfidPass',this)"
-                style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;">👁</button>
-            </div>
-          </div>
-          <div class="err-msg" id="rfidErr"></div>
-          <button class="btn btn-primary btn-full" onclick="doRFIDLogin()">Sign In</button>
-        </div>
-        <div id="rfidStatus" style="margin-top:.75rem;font-size:.8rem;color:var(--muted);text-align:center;"></div>
       </div>
 
       <div class="divider">or continue with</div>
@@ -262,17 +170,6 @@
           </select>
         </div>
 
-        <div class="field">
-          <label for="rRfid">RFID Card ID <span style="color:var(--muted);font-weight:400;">(optional — tap card below or type)</span></label>
-          <div class="rfid-zone" id="rfidRegZone" onclick="activateRegRFID()" style="padding:1rem;margin-bottom:.5rem;">
-            <span class="rfid-icon">📡</span>
-            <div class="rfid-label">Tap to register RFID card</div>
-            <div class="rfid-hint">Optional — click then tap your card</div>
-          </div>
-          <input class="inp" id="rRfid" type="text" placeholder="or enter RFID ID manually" />
-          <input id="rfidRegCapture" type="text" class="hidden" />
-        </div>
-
         <div class="err-msg" id="errStep2"></div>
         <div style="display:flex;gap:.75rem;">
           <button class="btn btn-ghost" onclick="regBack(2)" style="flex:0 0 auto;">← Back</button>
@@ -342,7 +239,7 @@
 import { initTheme, buildThemeBar } from './js/theme.js';
 import {
   loginWithGoogle, loginWithCredentials,
-  lookupByRFID, registerUser, createUserDocOnly,
+  registerUser, createUserDocOnly,
   getUserRole, onAuthChange, logout
 } from './js/auth.js';
 import { DEPARTMENTS } from './js/firebase-config.js';
@@ -442,16 +339,7 @@ window.switchPanel = (p) => {
   });
 };
 
-window.switchMethod = (m) => {
-  ['cred','rfid'].forEach(id => {
-    document.getElementById('mp' + id.charAt(0).toUpperCase() + id.slice(1))
-      .classList.toggle('active', id === m);
-    document.getElementById('mt' + id.charAt(0).toUpperCase() + id.slice(1))
-      .classList.toggle('active', id === m);
-  });
-};
-
-// ── LOGIN ────────────────────────────────────────────────────
+// ── REGISTER ─────────────────────────────────────────────────
 window.doLogin = async () => {
   const btn  = document.getElementById('btnLogin');
   const inp  = document.getElementById('loginInput').value.trim();
@@ -475,122 +363,44 @@ window.doGoogleLogin = async () => {
   googleLoginPending = true;
   try {
     await loginWithGoogle();
-    // Success — let onAuthChange handle redirect
     googleLoginPending = false;
   } catch (e) {
     if (e.message === 'NO_ACCOUNT') {
-      // Keep googleLoginPending = true so onAuthChange doesn't redirect
-      // It will be reset to false only after registration completes
-      pendingGoogleUser = { uid: e.uid, email: e.email, firstName: e.firstName, lastName: e.lastName };
+      pendingGoogleUser = { uid: e.uid, email: e.email };
 
-      switchPanel('register');
-      goStep(1);
+      // Better name parsing: first word = first name, last word = last name, MI left blank
+      const parts = (e.firstName + (e.lastName ? ' ' + e.lastName : '')).trim().split(/\s+/);
+      const firstName = parts[0] || '';
+      const lastName  = parts.length > 1 ? parts[parts.length - 1] : '';
 
-      if (e.firstName) document.getElementById('rFirst').value = e.firstName;
-      if (e.lastName)  document.getElementById('rLast').value  = e.lastName;
-
-      const emailInp = document.getElementById('rEmail');
-      emailInp.value    = e.email;
-      emailInp.readOnly = true;
-      emailInp.style.background = 'var(--surface2)';
-
-      document.getElementById('passSection').style.display = 'none';
-      document.getElementById('confirmSection').style.display = 'none';
-
-      showToast('info', 'Almost there!', 'Fill in your details to complete registration.');
+      // If already on step 3, just fill email and stay — otherwise go to step 1
+      if (currentStep === 3) {
+        const emailInp = document.getElementById('rEmail');
+        emailInp.value    = e.email;
+        emailInp.readOnly = true;
+        emailInp.style.background = 'var(--surface2)';
+        document.getElementById('passSection').style.display    = 'none';
+        document.getElementById('confirmSection').style.display = 'none';
+        showToast('info', 'Email pre-filled!', 'Just set a password to complete registration.');
+      } else {
+        switchPanel('register');
+        goStep(1);
+        document.getElementById('rFirst').value = firstName;
+        document.getElementById('rLast').value  = lastName;
+        // MI left blank — user fills it in
+        const emailInp = document.getElementById('rEmail');
+        emailInp.value    = e.email;
+        emailInp.readOnly = true;
+        emailInp.style.background = 'var(--surface2)';
+        document.getElementById('passSection').style.display    = 'none';
+        document.getElementById('confirmSection').style.display = 'none';
+        showToast('info', 'Almost there!', 'Fill in your details to complete registration.');
+      }
     } else {
       googleLoginPending = false;
       showToast('err', 'Sign-in Failed', e.message);
     }
   }
-};
-
-// ── RFID FLOW ────────────────────────────────────────────────
-let rfidData = null;
-
-window.activateRFID = () => {
-  const zone    = document.getElementById('rfidZone');
-  const capture = document.getElementById('rfidCapture');
-  const label   = document.getElementById('rfidLabel');
-  const hint    = document.getElementById('rfidHint');
-  const status  = document.getElementById('rfidStatus');
-
-  zone.classList.add('listening');
-  capture.value = '';
-  capture.focus();
-  label.textContent = '🟢 Listening… Tap your RFID card now';
-  hint.textContent  = 'Place your card on the RFID reader';
-  status.textContent = '';
-
-  // RFID reader acts as keyboard: types card ID + Enter
-  capture.onkeydown = async (e) => {
-    if (e.key === 'Enter' && capture.value.trim()) {
-      e.preventDefault();
-      const cardId = capture.value.trim();
-      zone.classList.remove('listening');
-      label.textContent = '🔍 Looking up card…';
-
-      try {
-        const user = await lookupByRFID(cardId);
-        if (!user) {
-          label.textContent = '❌ Card not found';
-          hint.textContent  = 'This RFID card is not registered. Please register first.';
-          return;
-        }
-        rfidData = user;
-
-        // ── Populate profile card ──────────────────────────────
-        const fullName = [user.firstName, user.middleInitial ? user.middleInitial + '.' : '', user.lastName]
-                          .filter(Boolean).join(' ');
-        const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase() || '?';
-
-        document.getElementById('rfidEmail').value            = user.email;
-        document.getElementById('rfidAvatar').textContent     = initials;
-        document.getElementById('rfidFullName').textContent   = fullName;
-        document.getElementById('rfidStudentId').textContent  = user.studentId
-          ? `ID: ${user.studentId}` : '(Faculty / Staff)';
-        document.getElementById('rfidDeptProg').textContent   = [user.program, user.department]
-          .filter(Boolean).join(' · ') || user.email;
-        document.getElementById('rfidTypeBadge').textContent  = user.isEmployee ? '🏫 Faculty / Staff' : '🎓 Student';
-        document.getElementById('rfidEmailBadge').textContent = user.email;
-        document.getElementById('rfidEmailRow').classList.remove('hidden');
-
-        label.textContent  = '✅ Card recognized';
-        hint.textContent   = 'Verify your info and enter your password to sign in';
-        status.textContent = '';
-        document.getElementById('rfidPass').focus();
-      } catch (e) {
-        label.textContent = '🚫 ' + e.message;
-        hint.textContent  = 'Please contact the library administrator.';
-      }
-    }
-  };
-};
-
-window.doRFIDLogin = async () => {
-  if (!rfidData) return;
-  const pass = document.getElementById('rfidPass').value;
-  const err  = document.getElementById('rfidErr');
-  if (!pass) { showErr(err, 'Please enter your password.'); return; }
-  err.classList.remove('show');
-
-  try {
-    await loginWithCredentials(rfidData.email, pass);
-  } catch (e) {
-    showErr(err, e.message);
-  }
-};
-
-window.resetRFID = () => {
-  rfidData = null;
-  document.getElementById('rfidEmailRow').classList.add('hidden');
-  document.getElementById('rfidPass').value = '';
-  document.getElementById('rfidErr').classList.remove('show');
-  const label = document.getElementById('rfidLabel');
-  const hint  = document.getElementById('rfidHint');
-  label.textContent = 'Tap your RFID card';
-  hint.textContent  = 'Click here, then tap your card on the reader';
-  document.getElementById('rfidCapture').value = '';
 };
 
 // ── REGISTER ─────────────────────────────────────────────────
@@ -693,7 +503,7 @@ window.doRegister = async () => {
         department:    document.getElementById('rDept').value,
         program:       document.getElementById('rProg').value,
         isEmployee:    document.getElementById('rIsEmployee').checked,
-        rfidId:        document.getElementById('rRfid').value.trim() || null
+        rfidId:        null
       });
       pendingGoogleUser = null;
       googleLoginPending = false;
@@ -708,7 +518,7 @@ window.doRegister = async () => {
         department:    document.getElementById('rDept').value,
         program:       document.getElementById('rProg').value,
         isEmployee:    document.getElementById('rIsEmployee').checked,
-        rfidId:        document.getElementById('rRfid').value.trim() || null
+        rfidId:        null
       });
     }
     showToast('ok', 'Account Created!', 'Welcome to WissenLib. Signing you in…');
