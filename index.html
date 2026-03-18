@@ -239,7 +239,7 @@
 import { initTheme, buildThemeBar } from './js/theme.js';
 import {
   loginWithGoogle, loginWithCredentials,
-  registerUser, createUserDocOnly,
+  registerUser,
   getUserRole, getUserData, onAuthChange, logout
 } from './js/auth.js';
 import { DEPARTMENTS } from './js/firebase-config.js';
@@ -385,21 +385,16 @@ window.doGoogleLogin = async () => {
         emailInp.value    = e.email;
         emailInp.readOnly = true;
         emailInp.style.background = 'var(--surface2)';
-        document.getElementById('passSection').style.display    = 'none';
-        document.getElementById('confirmSection').style.display = 'none';
-        showToast('info', 'Email pre-filled!', 'Just set a password to complete registration.');
+        showToast('info', 'Email pre-filled!', 'Set a password to complete registration.');
       } else {
         switchPanel('register');
         goStep(1);
         document.getElementById('rFirst').value = firstName;
         document.getElementById('rLast').value  = lastName;
-        // MI left blank — user fills it in
         const emailInp = document.getElementById('rEmail');
         emailInp.value    = e.email;
         emailInp.readOnly = true;
         emailInp.style.background = 'var(--surface2)';
-        document.getElementById('passSection').style.display    = 'none';
-        document.getElementById('confirmSection').style.display = 'none';
         showToast('info', 'Almost there!', 'Fill in your details to complete registration.');
       }
     } else {
@@ -488,68 +483,33 @@ window.doRegister = async () => {
     emailErr.classList.add('show'); return;
   }
 
-  // Only require password if not coming from Google
-  if (!pendingGoogleUser) {
-    if (pass.length < 8) { showErr(err, 'Password must be at least 8 characters.'); return; }
-    if (pass !== confirm){ showErr(err, 'Passwords do not match.'); return; }
-  }
+  // Always require password
+  if (pass.length < 8) { showErr(err, 'Password must be at least 8 characters.'); return; }
+  if (pass !== confirm){ showErr(err, 'Passwords do not match.'); return; }
 
   const btn = document.getElementById('btnRegister');
   setLoading(btn, true);
 
   try {
-    if (pendingGoogleUser) {
-      // Google user — just create Firestore doc, Firebase Auth already exists
-      await createUserDocOnly(pendingGoogleUser.uid, {
-        email,
-        studentId:     document.getElementById('rStudentId').value,
-        firstName:     document.getElementById('rFirst').value.trim(),
-        lastName:      document.getElementById('rLast').value.trim(),
-        middleInitial: document.getElementById('rMI').value.trim(),
-        department:    document.getElementById('rDept').value,
-        program:       document.getElementById('rProg').value,
-        isEmployee:    document.getElementById('rIsEmployee').checked,
-        rfidId:        null
-      });
-      pendingGoogleUser = null;
-      googleLoginPending = false;
-    } else {
-      await registerUser({
-        email,
-        password:      pass,
-        studentId:     document.getElementById('rStudentId').value,
-        firstName:     document.getElementById('rFirst').value.trim(),
-        lastName:      document.getElementById('rLast').value.trim(),
-        middleInitial: document.getElementById('rMI').value.trim(),
-        department:    document.getElementById('rDept').value,
-        program:       document.getElementById('rProg').value,
-        isEmployee:    document.getElementById('rIsEmployee').checked,
-        rfidId:        null
-      });
-    }
+    await registerUser({
+      email,
+      password:      pass,
+      studentId:     document.getElementById('rStudentId').value,
+      firstName:     document.getElementById('rFirst').value.trim(),
+      lastName:      document.getElementById('rLast').value.trim(),
+      middleInitial: document.getElementById('rMI').value.trim(),
+      department:    document.getElementById('rDept').value,
+      program:       document.getElementById('rProg').value,
+      isEmployee:    document.getElementById('rIsEmployee').checked,
+      rfidId:        null
+    });
+    pendingGoogleUser  = null;
+    googleLoginPending = false;
     showToast('ok', 'Account Created!', 'Welcome to WissenLib. Signing you in…');
-    // redirect via onAuthChange
   } catch (e) {
     showErr(err, e.message);
     setLoading(btn, false);
   }
-};
-
-// ── RFID Registration capture ────────────────────────────────
-window.activateRegRFID = () => {
-  const cap  = document.getElementById('rfidRegCapture');
-  const zone = document.getElementById('rfidRegZone');
-  cap.value = ''; cap.focus();
-  zone.classList.add('listening');
-  cap.onkeydown = (e) => {
-    if (e.key === 'Enter' && cap.value.trim()) {
-      e.preventDefault();
-      document.getElementById('rRfid').value = cap.value.trim();
-      zone.querySelector('.rfid-label').textContent = '✅ RFID card registered';
-      zone.querySelector('.rfid-hint').textContent  = cap.value.trim();
-      zone.classList.remove('listening');
-    }
-  };
 };
 
 // ── Helpers ──────────────────────────────────────────────────
