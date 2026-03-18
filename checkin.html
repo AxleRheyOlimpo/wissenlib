@@ -23,10 +23,6 @@
 </head>
 <body class="checkin-page">
 
-<!-- ── Theme Bar ──────────────────────────────────────────── -->
-<div id="themeBar" class="theme-bar"></div>
-<div id="toasts"></div>
-
 <!-- ── Top Bar ────────────────────────────────────────────── -->
 <div class="checkin-topbar">
   <div style="display:flex;align-items:center;gap:.75rem;">
@@ -36,11 +32,13 @@
       <div style="font-size:.725rem;color:var(--muted);">NEU Library</div>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:1rem;">
+  <div style="display:flex;align-items:center;gap:.75rem;">
     <div class="clock" id="clock"></div>
+    <div id="themeBar" class="theme-bar" style="position:static;box-shadow:none;background:transparent;border:none;padding:0;backdrop-filter:none;"></div>
     <button class="btn btn-sm" onclick="doLogout()" style="background:var(--error,#e53e3e);color:#fff;border:none;font-weight:600;">Sign Out</button>
   </div>
 </div>
+<div id="toasts"></div>
 
 <!-- ── Body ───────────────────────────────────────────────── -->
 <div class="checkin-body">
