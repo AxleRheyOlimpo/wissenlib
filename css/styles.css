@@ -333,6 +333,12 @@ select.inp { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg x
   border-radius: 1.25rem; padding: 2.25rem; width: 100%; max-width: 560px;
   box-shadow: 0 8px 32px var(--shadow);
 }
+@media(max-width: 480px) {
+  .checkin-body { padding: 1rem .5rem; align-items: flex-start; }
+  .checkin-card { padding: 1.25rem; border-radius: .875rem; }
+  .welcome-banner .name { font-size: 1.2rem; }
+  .reason-grid { grid-template-columns: repeat(2, 1fr); gap: .5rem; }
+}
 .welcome-banner {
   background: linear-gradient(135deg, var(--p) 0%, color-mix(in srgb, var(--p) 75%, var(--s)) 100%);
   border-radius: var(--radius); padding: 1.5rem;

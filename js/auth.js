@@ -79,7 +79,7 @@ export async function registerUser({
 
   // Validate student ID format
   if (!isEmployee && studentId && !/^\d{2}-\d{5}-\d{3}$/.test(studentId.trim()))
-    throw new Error('Student ID must follow the format yy-xxxxx-xxx (e.g. 26-12345-678).');
+    throw new Error('Student ID must follow the format yy-xxxxx-xxx (e.g. 24-12345-678).');
 
   const cred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
   const uid  = cred.user.uid;
