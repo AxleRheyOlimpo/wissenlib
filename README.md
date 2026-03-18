@@ -2,7 +2,7 @@
 
 A web-based visitor log system for the New Era University Library, built with vanilla JavaScript (ES Modules), Firebase Authentication, and Cloud Firestore.
 
-🔗 **Live Application:** https://wissenlib-neu.web.app
+🔗 **Live Application:** _[Add your Firebase Hosting URL here after deployment]_
 
 ---
 
@@ -28,30 +28,6 @@ A web-based visitor log system for the New Era University Library, built with va
 | Charts | Chart.js 4 |
 | PDF Export | jsPDF + jspdf-autotable |
 | Font | Inter (Google Fonts) |
-
----
-
-## Admin Access
-
-The following email is pre-configured as an admin:
-
-```
-jcesperanza@neu.edu.ph
-```
-
-Additional admins can be added to the `ADMIN_EMAILS` array in `js/firebase-config.js`. Any email in that list will automatically receive the `admin` role on first login, regardless of what is stored in Firestore.
-
----
-
-## RFID Integration
-
-The system supports any **USB HID RFID reader** (the kind that acts as a keyboard). No drivers required.
-
-1. Click the RFID tap zone on the login page
-2. Tap the RFID card — the reader types the card ID and sends Enter
-3. If the card is registered, the account email is pre-filled; enter the password to complete login
-
-To register an RFID card, use the **Register** tab → Step 2 → RFID tap zone.
 
 ---
 
@@ -121,6 +97,18 @@ After deployment, paste the **Hosting URL** at the top of this README.
 
 ---
 
+## Admin Access
+
+The following email is pre-configured as an admin:
+
+```
+jcesperanza@neu.edu.ph
+```
+
+Additional admins can be added to the `ADMIN_EMAILS` array in `js/firebase-config.js`. Any email in that list will automatically receive the `admin` role on first login, regardless of what is stored in Firestore.
+
+---
+
 ## Firestore Collections
 
 ### `users`
@@ -146,6 +134,18 @@ After deployment, paste the **Hosting URL** at the top of this README.
 | `checkInTime` | Timestamp | Firestore server timestamp |
 | `checkInTimeISO` | string | ISO string for sorting |
 | _(+ full user snapshot)_ | | Name, ID, dept, program, etc. |
+
+---
+
+## RFID Integration
+
+The system supports any **USB HID RFID reader** (the kind that acts as a keyboard). No drivers required.
+
+1. Click the RFID tap zone on the login page
+2. Tap the RFID card — the reader types the card ID and sends Enter
+3. If the card is registered, the account email is pre-filled; enter the password to complete login
+
+To register an RFID card, use the **Register** tab → Step 2 → RFID tap zone.
 
 ---
 

@@ -66,10 +66,10 @@
 
     <nav>
       <button class="nav-item active" onclick="setView('overview')" id="navOverview">
-        <span class="nav-icon">📊</span> Overview
+        Overview
       </button>
       <button class="nav-item" onclick="setView('log')" id="navLog">
-        <span class="nav-icon">📋</span> Visitor Log
+        Visitor Log
       </button>
     </nav>
 
@@ -105,7 +105,7 @@
         <div id="popName" style="font-size:.875rem;font-weight:700;color:var(--text);padding:0 .25rem;margin-bottom:.15rem;"></div>
         <div id="popEmail" style="font-size:.75rem;color:var(--muted);padding:0 .25rem;word-break:break-all;margin-bottom:.75rem;"></div>
         <button class="nav-item" onclick="doLogout()" style="color:var(--err);width:100%;">
-          <span class="nav-icon">🚪</span> Sign Out
+          Sign Out
         </button>
       </div>
     </div>
@@ -124,7 +124,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
-        <div id="adminBadge" class="role-badge">🛡️ Admin</div>
+        <div id="adminBadge" class="role-badge">Admin</div>
         <div id="themeBar" class="theme-bar" style="position:static;box-shadow:none;"></div>
       </div>
     </div>
@@ -175,8 +175,8 @@
       <!-- Chart -->
       <div class="chart-wrap">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-          <div class="chart-title">📈 Daily Visitor Activity</div>
-          <button class="btn btn-ghost btn-sm" onclick="exportPDF()">⬇ Export PDF</button>
+          <div class="chart-title">Daily Visitor Activity</div>
+          <button class="btn btn-ghost btn-sm" onclick="exportPDF()">Export PDF</button>
         </div>
         <canvas id="chartCanvas"></canvas>
       </div>
@@ -185,11 +185,8 @@
       <div class="filter-bar">
         <div class="field filter-field">
           <label>Search</label>
-          <div class="inp-icon-wrap">
-            <span class="inp-icon">🔍</span>
-            <input class="inp" id="fSearch" type="text" placeholder="Name, ID, program…"
-              oninput="applyFilters()" />
-          </div>
+          <input class="inp" id="fSearch" type="text" placeholder="Name, ID, program…"
+            oninput="applyFilters()" />
         </div>
         <div class="field filter-field">
           <label>Reason</label>
@@ -228,7 +225,7 @@
           <div class="table-toolbar-title">Visitor Log</div>
           <div style="display:flex;gap:.5rem;">
             <span id="recordCount" style="font-size:.8rem;color:var(--muted);align-self:center;"></span>
-            <button class="btn btn-ghost btn-sm" onclick="exportPDF()">⬇ PDF</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportPDF()">PDF</button>
           </div>
         </div>
         <div style="overflow-x:auto;">

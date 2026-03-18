@@ -377,7 +377,7 @@ function showAdminChoice(user) {
   modal.style.cssText = `
     position:fixed; inset:0; z-index:999;
     display:flex; align-items:center; justify-content:center;
-    padding:1rem;
+    padding:1rem; background:rgba(0,0,0,.35); backdrop-filter:blur(4px);
   `;
   modal.innerHTML = `
     <div style="
@@ -387,7 +387,7 @@ function showAdminChoice(user) {
       box-shadow:0 24px 64px var(--shadow); text-align:center;
       animation: modalIn .25s ease;
     ">
-      <div style="font-size:2rem;margin-bottom:.75rem;">👋</div>
+      
       <div style="font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:.25rem;">
         Welcome back, ${user.displayName?.split(' ')[0] || 'Admin'}!
       </div>
@@ -401,7 +401,7 @@ function showAdminChoice(user) {
           display:flex; align-items:center; justify-content:center; gap:.625rem;
           transition:all .18s;
         " onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
-          📊 Admin Dashboard
+          Admin Dashboard
         </button>
         <button onclick="window.location.href='checkin.html'" style="
           padding:1rem; border-radius:var(--radius); cursor:pointer;
@@ -411,7 +411,7 @@ function showAdminChoice(user) {
           transition:all .18s;
         " onmouseover="this.style.borderColor='var(--p)';this.style.color='var(--p)'"
            onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text)'">
-          ✅ Check In as Visitor
+          Check In as Visitor
         </button>
         <button onclick="doAdminLogout()" style="
           padding:.5rem; background:none; border:none; cursor:pointer;

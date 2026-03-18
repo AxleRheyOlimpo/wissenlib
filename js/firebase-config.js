@@ -6,12 +6,12 @@ import { getAuth }        from "https://www.gstatic.com/firebasejs/10.12.2/fireb
 import { getFirestore }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBFhA_a8PpX_cXPKJPjdDISmbLn6_flw6g",
-  authDomain: "wissenlib-neu.firebaseapp.com",
-  projectId: "wissenlib-neu",
-  storageBucket: "wissenlib-neu.firebasestorage.app",
-  messagingSenderId: "116880882776",
-  appId: "1:116880882776:web:58a9c24443d92375009e2d"
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId:             "YOUR_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -24,9 +24,7 @@ export const ALLOWED_DOMAIN = "@neu.edu.ph";
 
 // Emails that always get admin role (add more as needed)
 export const ADMIN_EMAILS = [
-  "jcesperanza@neu.edu.ph",
-  "axlerhey.olimpo@neu.edu.ph",
-  "fredrickjohn.sapinoro@neu.edu.ph"
+  "jcesperanza@neu.edu.ph"
 ];
 
 // NEU Departments + Programs map

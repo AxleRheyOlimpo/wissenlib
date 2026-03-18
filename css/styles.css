@@ -333,12 +333,6 @@ select.inp { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg x
   border-radius: 1.25rem; padding: 2.25rem; width: 100%; max-width: 560px;
   box-shadow: 0 8px 32px var(--shadow);
 }
-@media(max-width: 480px) {
-  .checkin-body { padding: 1rem .5rem; align-items: flex-start; }
-  .checkin-card { padding: 1.25rem; border-radius: .875rem; }
-  .welcome-banner .name { font-size: 1.2rem; }
-  .reason-grid { grid-template-columns: repeat(2, 1fr); gap: .5rem; }
-}
 .welcome-banner {
   background: linear-gradient(135deg, var(--p) 0%, color-mix(in srgb, var(--p) 75%, var(--s)) 100%);
   border-radius: var(--radius); padding: 1.5rem;
@@ -551,20 +545,70 @@ tbody tr:hover td { background: var(--surface2); }
 .page-info { font-size: .8125rem; color: var(--muted); flex: 1; }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
+
+/* Tablet + Mobile — Admin */
 @media (max-width: 768px) {
+  /* Admin layout stacks vertically */
   .admin-layout { flex-direction: column; }
-  .sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: .75rem; }
+  .sidebar {
+    width: 100%; height: auto; position: static;
+    flex-direction: row; flex-wrap: wrap;
+    padding: .75rem 1rem; gap: .5rem;
+    align-items: center;
+  }
   .sidebar-logo { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
   .sidebar-footer { display: none; }
+  nav { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .nav-item { margin-bottom: 0; padding: .45rem .75rem; font-size: .8rem; }
+  .admin-main { height: auto !important; overflow-y: unset !important; }
+  body { overflow: auto !important; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .field-row, .field-row-3 { grid-template-columns: 1fr; }
-  .reason-grid { grid-template-columns: repeat(2, 1fr); }
+  .admin-content { padding: 1rem; }
+  .admin-topbar { padding: .75rem 1rem; }
+  .filter-bar { flex-direction: column; align-items: stretch; gap: .5rem; }
+  .filter-field { min-width: unset; }
+  table { font-size: .775rem; }
+  thead th, tbody td { padding: .5rem .6rem; }
 }
 
+/* Mobile — Auth / Login page */
 @media (max-width: 480px) {
-  .auth-card { padding: 1.5rem; }
-  .filter-bar { flex-direction: column; align-items: stretch; }
-  .filter-field { min-width: unset; }
+  .auth-card { padding: 1.25rem; border-radius: 1rem; }
+  .auth-page { padding: 1rem .75rem; align-items: flex-start; padding-top: 3.5rem; }
+  .logo-block { margin-bottom: 1.25rem; }
+  .tabs { margin-bottom: 1rem; }
+  .field-row, .field-row-3 { grid-template-columns: 1fr; }
+  .method-tabs { flex-direction: column; gap: .35rem; }
+  .method-tab { padding: .5rem; font-size: .78rem; }
+  .btn-google { font-size: .8rem; padding: .625rem; }
+  .theme-bar { top: .5rem; right: .5rem; padding: .2rem .35rem; }
+  .theme-pill { padding: .2rem .4rem; font-size: .68rem; }
+}
+
+/* Mobile — Check-in page */
+@media (max-width: 480px) {
+  .checkin-topbar { padding: .625rem 1rem; }
+  .checkin-body { padding: .75rem .5rem; align-items: flex-start; }
+  .checkin-card { padding: 1rem; border-radius: .875rem; }
+  .welcome-banner { padding: 1rem; margin-bottom: 1.25rem; }
+  .welcome-banner .name { font-size: 1.15rem; }
+  .welcome-banner .prog { font-size: .8rem; }
+  .reason-grid { grid-template-columns: repeat(2, 1fr); gap: .5rem; }
+  .reason-tile { padding: .75rem .35rem; font-size: .72rem; }
+  .reason-tile .icon { font-size: 1.25rem; }
+  .section-head { font-size: .72rem; }
+  #btnCheckin { font-size: .875rem; padding: .75rem !important; }
+}
+
+/* Small phones (iPhone SE, Galaxy A series) */
+@media (max-width: 360px) {
+  .auth-card { padding: 1rem; }
+  .reason-grid { grid-template-columns: repeat(2, 1fr); gap: .375rem; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .checkin-card { padding: .875rem; }
+  .welcome-banner .name { font-size: 1rem; }
+  .logo-text .app-name { font-size: 1.15rem; }
 }
 
 /* ── SCROLLBAR ───────────────────────────────────────────── */
