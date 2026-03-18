@@ -590,9 +590,11 @@ window.setView = (v) => {
   document.getElementById('navOverview').classList.toggle('active', v === 'overview');
   document.getElementById('navLog').classList.toggle('active', v === 'log');
   document.getElementById('viewTitle').textContent = v === 'overview' ? 'Dashboard Overview' : 'Visitor Log';
-  // All content is in overview for now (log scrolls to table)
+  const main = document.querySelector('.admin-main');
   if (v === 'log') {
-    document.querySelector('.table-wrap').scrollIntoView({ behavior:'smooth' });
+    document.querySelector('.table-wrap').scrollIntoView({ behavior: 'smooth' });
+  } else {
+    main.scrollTo({ top: 0, behavior: 'smooth' });
   }
 };
 

@@ -8,6 +8,16 @@
 <style>
   .others-box { display:none; margin-top:.75rem; }
   .others-box.show { display:block; }
+  /* Override floating theme bar — inline in topbar instead */
+  #themeBar.theme-bar {
+    position: static !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
   .clock { font-size:.875rem; color:var(--text2); font-weight:500; font-variant-numeric:tabular-nums; }
   .checkin-success {
     display:none; text-align:center; padding:2rem 1rem;
@@ -35,7 +45,6 @@
   <div style="display:flex;align-items:center;gap:.75rem;">
     <div class="clock" id="clock"></div>
     <div id="themeBar" class="theme-bar" style="position:static;box-shadow:none;background:transparent;border:none;padding:0;backdrop-filter:none;"></div>
-    <button class="btn btn-sm" onclick="doLogout()" style="background:var(--error,#e53e3e);color:#fff;border:none;font-weight:600;">Sign Out</button>
   </div>
 </div>
 <div id="toasts"></div>
@@ -53,7 +62,7 @@
     </div>
 
     <!-- Reason for visit -->
-    <p class="section-head">Reason for Visit</p>
+    <p class="section-head" style="color:var(--s);border-bottom:2px solid var(--s);padding-bottom:.35rem;">Reason for Visit</p>
     <div class="reason-grid" id="reasonGrid">
       <div class="reason-tile" onclick="selectReason(this,'Study')" data-reason="Study">
         <span class="icon">📖</span>Study
@@ -88,6 +97,17 @@
     <button class="btn btn-primary btn-full mt-2" id="btnCheckin"
       onclick="doCheckin()" style="padding:.875rem;">
       ✅ &nbsp;Confirm Check-In
+    </button>
+
+    <button onclick="doLogout()" style="
+      width:100%; margin-top:.6rem; padding:.6rem;
+      background:none; border:1.5px solid var(--error,#e53e3e);
+      color:var(--error,#e53e3e); border-radius:var(--radius);
+      font-size:.85rem; font-weight:600; cursor:pointer;
+      transition: all .18s;
+    " onmouseover="this.style.background='var(--error,#e53e3e)';this.style.color='#fff'"
+       onmouseout="this.style.background='none';this.style.color='var(--error,#e53e3e)'">
+      Sign Out
     </button>
 
     <!-- ── Success screen ──────────────────────────────────── -->
