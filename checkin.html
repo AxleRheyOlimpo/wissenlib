@@ -172,6 +172,10 @@ let currentUser = null;
 let profileData = null;
 let selectedReason = '';
 
+// Read and immediately clear the admin-as-visitor flag at page load
+const isAdminVisitor = sessionStorage.getItem('adminAsVisitor') === '1';
+sessionStorage.removeItem('adminAsVisitor');
+
 // Disable check-in until profile is ready
 document.getElementById('btnCheckin').disabled = true;
 
@@ -179,11 +183,9 @@ onAuthStateChanged(auth, async user => {
   if (!user) { window.location.href = 'index.html'; return; }
   try {
     const role = await getUserRole(user.uid);
-    if (role === 'admin' && sessionStorage.getItem('adminAsVisitor') !== '1') {
+    if (role === 'admin' && !isAdminVisitor) {
       window.location.href = 'admin.html'; return;
     }
-    // Clear the flag after use
-    sessionStorage.removeItem('adminAsVisitor');
     currentUser = user;
     profileData = await getUserData(user.uid);
 
