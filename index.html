@@ -240,7 +240,7 @@ import { initTheme, buildThemeBar } from './js/theme.js';
 import {
   loginWithGoogle, loginWithCredentials,
   registerUser, createUserDocOnly,
-  getUserRole, onAuthChange, logout
+  getUserRole, getUserData, onAuthChange, logout
 } from './js/auth.js';
 import { DEPARTMENTS } from './js/firebase-config.js';
 
@@ -253,9 +253,15 @@ let googleLoginPending = false; // blocks onAuthChange during Google popup
 let pendingGoogleUser  = null;  // stores Google user awaiting registration
 
 onAuthChange(async user => {
-  if (googleLoginPending) return; // wait for Google login flow to finish
+  if (googleLoginPending) return;
   if (!user) return;
   try {
+    // Check if Firestore doc exists — if not, sign out (deleted account)
+    const data = await getUserData(user.uid);
+    if (!data) {
+      await logout();
+      return;
+    }
     const role = await getUserRole(user.uid);
     if (role === 'admin') {
       showAdminChoice(user);
