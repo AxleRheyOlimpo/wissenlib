@@ -24,7 +24,8 @@ export const ALLOWED_DOMAIN = "@neu.edu.ph";
 
 // Emails that always get admin role (add more as needed)
 export const ADMIN_EMAILS = [
-  "jcesperanza@neu.edu.ph"
+  "jcesperanza@neu.edu.ph",
+  "axlerhey.olimpo@neu.edu.ph"
 ];
 
 // NEU Departments + Programs map
