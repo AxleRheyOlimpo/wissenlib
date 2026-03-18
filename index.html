@@ -480,9 +480,17 @@ window.doRegister = async () => {
       if (pass !== confirm){ showErr(err, 'Passwords do not match.'); setLoading(btn, false); return; }
 
       // Link email+password credential to the existing Google account
-      const { EmailAuthProvider, linkWithCredential } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
-      const credential = EmailAuthProvider.credential(pendingGoogleUser.email, pass);
-      await linkWithCredential(auth.currentUser, credential);
+      try {
+        const { EmailAuthProvider, linkWithCredential } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+        const credential = EmailAuthProvider.credential(pendingGoogleUser.email, pass);
+        await linkWithCredential(auth.currentUser, credential);
+      } catch (linkErr) {
+        // Already linked from a previous attempt — that's fine, continue
+        if (linkErr.code !== 'auth/provider-already-linked' &&
+            linkErr.code !== 'auth/email-already-in-use') {
+          throw linkErr;
+        }
+      }
 
       // Save Firestore doc
       await createUserDocOnly(pendingGoogleUser.uid, {
