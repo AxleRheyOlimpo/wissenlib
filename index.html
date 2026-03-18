@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="light" data-palette="golden">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WissenLib — NEU Library Visitor Log</title>
+<link rel="stylesheet" href="css/styles.css" />
+<style>
+  /* index-specific overrides */
+  .form-panel { display: none; }
+  .form-panel.active { display: block; }
+
+  .method-panel { display: none; }
+  .method-panel.active { display: block; }
+
+  .strength-bar { height: 3px; border-radius: 2px; margin-top: .35rem; transition: all .3s; }
+  .err-msg { font-size: .775rem; color: var(--err); margin-top: .3rem; display: none; }
+  .err-msg.show { display: block; }
+
+  .progress-wrap { margin-top: 1.25rem; }
+  .reg-steps { display: flex; gap: .375rem; margin-bottom: 1.25rem; }
+  .reg-step {
+    flex: 1; height: 4px; border-radius: 2px;
+    background: var(--border); transition: background .3s;
+  }
+  .reg-step.done { background: var(--p); }
+
+  .google-icon { width: 18px; height: 18px; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<!-- ── Slideshow Background ──────────────────────────────── -->
+<div class="slideshow" aria-hidden="true">
+  <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1920&q=80')"></div>
+  <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920&q=80')"></div>
+  <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=1920&q=80')"></div>
+  <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1568667256549-094345857637?w=1920&q=80')"></div>
+  <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1920&q=80')"></div>
+  <div class="slide-overlay"></div>
+</div>
+
+<!-- ── Theme Bar ─────────────────────────────────────────── -->
+<div id="themeBar" class="theme-bar"></div>
+
+<!-- ── Toast ─────────────────────────────────────────────── -->
+<div id="toasts"></div>
+
+<!-- ── Auth Card ─────────────────────────────────────────── -->
+<div class="auth-page">
+  <div class="auth-card">
+
+    <!-- Logo -->
+    <div class="logo-block">
+      <div class="logo-icon">📚</div>
+      <div class="logo-text">
+        <div class="app-name">WissenLib</div>
+        <div class="app-sub">NEU Library Visitor Log</div>
+      </div>
+    </div>
+
+    <!-- Login / Register toggle -->
+    <div class="tabs" role="tablist">
+      <button class="tab active" id="tabLogin" role="tab" onclick="switchPanel('login')">Sign In</button>
+      <button class="tab"        id="tabReg"   role="tab" onclick="switchPanel('register')">Register</button>
+    </div>
+
+    <!-- ══ LOGIN PANEL ══════════════════════════════════════ -->
+    <div class="form-panel active" id="panelLogin">
+
+      <!-- Sub-method tabs -->
+      <div class="method-tabs">
+        <button class="method-tab active" onclick="switchMethod('cred')" id="mtCred">🔑 Email / ID</button>
+        <button class="method-tab"        onclick="switchMethod('rfid')" id="mtRfid">📡 RFID Card</button>
+      </div>
+
+      <!-- Email/ID method -->
+      <div class="method-panel active" id="mpCred">
+        <div class="field">
+          <label for="loginInput">Student ID or Institutional Email</label>
+          <div class="inp-icon-wrap">
+            <span class="inp-icon">👤</span>
+            <input class="inp" id="loginInput" type="text"
+              placeholder="26-12345-678 or name@neu.edu.ph" autocomplete="username" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="loginPass">Password</label>
+          <div class="inp-icon-wrap" style="position:relative;">
+            <span class="inp-icon">🔒</span>
+            <input class="inp" id="loginPass" type="password"
+              placeholder="Your password" autocomplete="current-password" />
+            <button type="button" onclick="togglePw('loginPass',this)"
+              style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;">👁</button>
+          </div>
+        </div>
+        <div class="err-msg" id="loginErr"></div>
+        <button class="btn btn-primary btn-full mt-2" id="btnLogin" onclick="doLogin()">
+          Sign In
+        </button>
+      </div>
+
+      <!-- RFID method -->
+      <div class="method-panel" id="mpRfid">
+        <div class="rfid-zone" id="rfidZone" onclick="activateRFID()">
+          <span class="rfid-icon rfid-pulse" id="rfidIcon">📡</span>
+          <div class="rfid-label" id="rfidLabel">Tap your RFID card</div>
+          <div class="rfid-hint" id="rfidHint">Click here, then tap your card on the reader</div>
+        </div>
+        <!-- Hidden input that captures RFID keystrokes -->
+        <input id="rfidCapture" type="text" class="hidden" autocomplete="off"
+          placeholder="RFID input (hidden)" aria-label="RFID capture" />
+
+        <!-- Profile card shown after successful RFID scan -->
+        <div id="rfidEmailRow" class="hidden" style="margin-top:1rem;">
+
+          <!-- ID card-style profile preview -->
+          <div id="rfidCard" style="
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+          ">
+            <!-- Avatar circle with initials -->
+            <div id="rfidAvatar" style="
+              width: 52px; height: 52px; border-radius: 50%;
+              background: var(--accent); color: #fff;
+              display: flex; align-items: center; justify-content: center;
+              font-size: 1.3rem; font-weight: 700; flex-shrink: 0;
+              letter-spacing: .5px;
+            ">??</div>
+
+            <div style="flex:1; min-width:0;">
+              <!-- Full name -->
+              <div id="rfidFullName" style="font-weight:700; font-size:1rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+              <!-- Student ID -->
+              <div id="rfidStudentId" style="font-size:.82rem; color:var(--muted); margin-top:.1rem; font-family: monospace; letter-spacing:.5px;"></div>
+              <!-- Department & Program -->
+              <div id="rfidDeptProg" style="font-size:.8rem; color:var(--muted); margin-top:.25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+              <!-- Badge row -->
+              <div style="margin-top:.4rem; display:flex; gap:.4rem; flex-wrap:wrap;">
+                <span id="rfidTypeBadge" style="
+                  display:inline-block; font-size:.7rem; font-weight:600;
+                  padding:.15rem .55rem; border-radius:999px;
+                  background:var(--accent); color:#fff;
+                "></span>
+                <span id="rfidEmailBadge" style="
+                  display:inline-block; font-size:.7rem;
+                  padding:.15rem .55rem; border-radius:999px;
+                  background:var(--surface); color:var(--muted);
+                  border:1px solid var(--border);
+                  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;
+                "></span>
+              </div>
+            </div>
+
+            <!-- Small tap-again link -->
+            <button onclick="resetRFID()" title="Tap a different card" style="
+              background:none; border:none; cursor:pointer;
+              color:var(--muted); font-size:.75rem; flex-shrink:0;
+              text-decoration:underline;
+            ">change</button>
+          </div>
+
+          <!-- Hidden email used for auth -->
+          <input id="rfidEmail" type="hidden" />
+
+          <!-- Password -->
+          <div class="field">
+            <label for="rfidPass">Password</label>
+            <div class="inp-icon-wrap" style="position:relative;">
+              <span class="inp-icon">🔒</span>
+              <input class="inp" id="rfidPass" type="password" placeholder="Enter your password"
+                autocomplete="current-password" />
+              <button type="button" onclick="togglePw('rfidPass',this)"
+                style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;">👁</button>
+            </div>
+          </div>
+          <div class="err-msg" id="rfidErr"></div>
+          <button class="btn btn-primary btn-full" onclick="doRFIDLogin()">Sign In</button>
+        </div>
+        <div id="rfidStatus" style="margin-top:.75rem;font-size:.8rem;color:var(--muted);text-align:center;"></div>
+      </div>
+
+      <div class="divider">or continue with</div>
+
+      <button class="btn btn-google" onclick="doGoogleLogin()">
+        <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google (@neu.edu.ph)
+      </button>
+
+    </div><!-- /panelLogin -->
+
+    <!-- ══ REGISTER PANEL ════════════════════════════════════ -->
+    <div class="form-panel" id="panelRegister">
+
+      <!-- Step progress indicator -->
+      <div class="reg-steps">
+        <div class="reg-step done" id="rs1"></div>
+        <div class="reg-step"      id="rs2"></div>
+        <div class="reg-step"      id="rs3"></div>
+      </div>
+
+      <!-- Step 1: Identity -->
+      <div class="method-panel active" id="regStep1">
+        <p class="section-head">Step 1 of 3 — Identity</p>
+
+        <div class="field">
+          <label for="rStudentId">Student ID <span style="color:var(--muted);font-weight:400;">(format: yy-xxxxx-xxx)</span></label>
+          <input class="inp" id="rStudentId" type="text" placeholder="26-12345-678"
+            oninput="fmtStudentId(this)" maxlength="13" />
+          <div class="err-msg" id="errStudentId">Invalid format. Use yy-xxxxx-xxx</div>
+        </div>
+
+        <div class="field-row-3">
+          <div>
+            <label for="rFirst">First Name</label>
+            <input class="inp" id="rFirst" type="text" placeholder="Juan" />
+          </div>
+          <div>
+            <label for="rLast">Last Name</label>
+            <input class="inp" id="rLast" type="text" placeholder="Dela Cruz" />
+          </div>
+          <div>
+            <label for="rMI">M.I.</label>
+            <input class="inp" id="rMI" type="text" placeholder="A." maxlength="3" />
+          </div>
+        </div>
+
+        <label class="check-row" style="margin-bottom:1rem;">
+          <input type="checkbox" id="rIsEmployee" onchange="toggleEmployeeMode(this.checked)" />
+          <span>I am faculty / staff</span>
+        </label>
+
+        <div class="err-msg" id="errStep1"></div>
+        <button class="btn btn-primary btn-full" onclick="regNext(1)">Continue →</button>
+      </div>
+
+      <!-- Step 2: Department & Program -->
+      <div class="method-panel" id="regStep2">
+        <p class="section-head">Step 2 of 3 — College & Program</p>
+
+        <div class="field">
+          <label for="rDept">College / Department</label>
+          <select class="inp" id="rDept" onchange="fillPrograms(this.value)">
+            <option value="">— Select Department —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="rProg">Program</label>
+          <select class="inp" id="rProg">
+            <option value="">— Select Program —</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="rRfid">RFID Card ID <span style="color:var(--muted);font-weight:400;">(optional — tap card below or type)</span></label>
+          <div class="rfid-zone" id="rfidRegZone" onclick="activateRegRFID()" style="padding:1rem;margin-bottom:.5rem;">
+            <span class="rfid-icon">📡</span>
+            <div class="rfid-label">Tap to register RFID card</div>
+            <div class="rfid-hint">Optional — click then tap your card</div>
+          </div>
+          <input class="inp" id="rRfid" type="text" placeholder="or enter RFID ID manually" />
+          <input id="rfidRegCapture" type="text" class="hidden" />
+        </div>
+
+        <div class="err-msg" id="errStep2"></div>
+        <div style="display:flex;gap:.75rem;">
+          <button class="btn btn-ghost" onclick="regBack(2)" style="flex:0 0 auto;">← Back</button>
+          <button class="btn btn-primary btn-full" onclick="regNext(2)">Continue →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Account credentials -->
+      <div class="method-panel" id="regStep3">
+        <p class="section-head">Step 3 of 3 — Account</p>
+
+        <div class="field">
+          <label for="rEmail">Institutional Email</label>
+          <div class="inp-icon-wrap">
+            <span class="inp-icon">✉️</span>
+            <input class="inp" id="rEmail" type="email" placeholder="name@neu.edu.ph" />
+          </div>
+          <div class="err-msg" id="errEmail">Must be an @neu.edu.ph address</div>
+        </div>
+        <div class="field">
+          <label for="rPass">Password <span style="color:var(--muted);font-weight:400;">(min. 8 characters)</span></label>
+          <div class="inp-icon-wrap" style="position:relative;">
+            <span class="inp-icon">🔒</span>
+            <input class="inp" id="rPass" type="password" placeholder="Create a strong password"
+              oninput="checkStrength(this.value)" />
+            <button type="button" onclick="togglePw('rPass',this)"
+              style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;">👁</button>
+          </div>
+          <div class="strength-bar" id="strengthBar" style="background:var(--border);"></div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:.25rem;" id="strengthLabel"></div>
+        </div>
+        <div class="field">
+          <label for="rConfirm">Confirm Password</label>
+          <div class="inp-icon-wrap" style="position:relative;">
+            <span class="inp-icon">🔒</span>
+            <input class="inp" id="rConfirm" type="password" placeholder="Repeat your password" />
+            <button type="button" onclick="togglePw('rConfirm',this)"
+              style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;">👁</button>
+          </div>
+        </div>
+
+        <div class="err-msg" id="errStep3"></div>
+        <div style="display:flex;gap:.75rem;">
+          <button class="btn btn-ghost" onclick="regBack(3)" style="flex:0 0 auto;">← Back</button>
+          <button class="btn btn-primary btn-full" id="btnRegister" onclick="doRegister()">Create Account</button>
+        </div>
+
+        <div class="divider" style="margin:.875rem 0 .75rem;">or</div>
+        <button class="btn btn-google" onclick="doGoogleLogin()">
+          <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Register with Google
+        </button>
+      </div>
+
+    </div><!-- /panelRegister -->
+
+  </div><!-- /auth-card -->
+</div><!-- /auth-page -->
+
+<!-- ── Script ─────────────────────────────────────────────── -->
+<script type="module">
+import { initTheme, buildThemeBar } from './js/theme.js';
+import {
+  loginWithGoogle, loginWithCredentials,
+  lookupByRFID, registerUser,
+  getUserRole, onAuthChange, logout
+} from './js/auth.js';
+import { DEPARTMENTS } from './js/firebase-config.js';
+
+// ── Theme setup ─────────────────────────────────────────────
+const { mode, palette } = initTheme();
+buildThemeBar(mode, palette);
+
+// ── If already logged in, redirect ──────────────────────────
+onAuthChange(async user => {
+  if (!user) return;
+  try {
+    const role = await getUserRole(user.uid);
+    window.location.href = role === 'admin' ? 'admin.html' : 'checkin.html';
+  } catch (e) {
+    showToast('err', 'Account Blocked', e.message);
+    await logout();
+  }
+});
+
+// ── Panel / tab switching ────────────────────────────────────
+window.switchPanel = (p) => {
+  ['login','register'].forEach(n => {
+    document.getElementById('panel' + n.charAt(0).toUpperCase() + n.slice(1))
+      .classList.toggle('active', n === p);
+    document.getElementById('tab' + (n === 'login' ? 'Login' : 'Reg'))
+      .classList.toggle('active', n === p);
+  });
+};
+
+window.switchMethod = (m) => {
+  ['cred','rfid'].forEach(id => {
+    document.getElementById('mp' + id.charAt(0).toUpperCase() + id.slice(1))
+      .classList.toggle('active', id === m);
+    document.getElementById('mt' + id.charAt(0).toUpperCase() + id.slice(1))
+      .classList.toggle('active', id === m);
+  });
+};
+
+// ── LOGIN ────────────────────────────────────────────────────
+window.doLogin = async () => {
+  const btn  = document.getElementById('btnLogin');
+  const inp  = document.getElementById('loginInput').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const err  = document.getElementById('loginErr');
+
+  if (!inp || !pass) { showErr(err, 'Please fill in all fields.'); return; }
+  err.classList.remove('show');
+  setLoading(btn, true);
+
+  try {
+    await loginWithCredentials(inp, pass);
+    // redirect handled by onAuthChange
+  } catch (e) {
+    showErr(err, e.message);
+    setLoading(btn, false);
+  }
+};
+
+window.doGoogleLogin = async () => {
+  try {
+    await loginWithGoogle();
+  } catch (e) {
+    showToast('err', 'Sign-in Failed', e.message);
+  }
+};
+
+// ── RFID FLOW ────────────────────────────────────────────────
+let rfidData = null;
+
+window.activateRFID = () => {
+  const zone    = document.getElementById('rfidZone');
+  const capture = document.getElementById('rfidCapture');
+  const label   = document.getElementById('rfidLabel');
+  const hint    = document.getElementById('rfidHint');
+  const status  = document.getElementById('rfidStatus');
+
+  zone.classList.add('listening');
+  capture.value = '';
+  capture.focus();
+  label.textContent = '🟢 Listening… Tap your RFID card now';
+  hint.textContent  = 'Place your card on the RFID reader';
+  status.textContent = '';
+
+  // RFID reader acts as keyboard: types card ID + Enter
+  capture.onkeydown = async (e) => {
+    if (e.key === 'Enter' && capture.value.trim()) {
+      e.preventDefault();
+      const cardId = capture.value.trim();
+      zone.classList.remove('listening');
+      label.textContent = '🔍 Looking up card…';
+
+      try {
+        const user = await lookupByRFID(cardId);
+        if (!user) {
+          label.textContent = '❌ Card not found';
+          hint.textContent  = 'This RFID card is not registered. Please register first.';
+          return;
+        }
+        rfidData = user;
+
+        // ── Populate profile card ──────────────────────────────
+        const fullName = [user.firstName, user.middleInitial ? user.middleInitial + '.' : '', user.lastName]
+                          .filter(Boolean).join(' ');
+        const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase() || '?';
+
+        document.getElementById('rfidEmail').value            = user.email;
+        document.getElementById('rfidAvatar').textContent     = initials;
+        document.getElementById('rfidFullName').textContent   = fullName;
+        document.getElementById('rfidStudentId').textContent  = user.studentId
+          ? `ID: ${user.studentId}` : '(Faculty / Staff)';
+        document.getElementById('rfidDeptProg').textContent   = [user.program, user.department]
+          .filter(Boolean).join(' · ') || user.email;
+        document.getElementById('rfidTypeBadge').textContent  = user.isEmployee ? '🏫 Faculty / Staff' : '🎓 Student';
+        document.getElementById('rfidEmailBadge').textContent = user.email;
+        document.getElementById('rfidEmailRow').classList.remove('hidden');
+
+        label.textContent  = '✅ Card recognized';
+        hint.textContent   = 'Verify your info and enter your password to sign in';
+        status.textContent = '';
+        document.getElementById('rfidPass').focus();
+      } catch (e) {
+        label.textContent = '🚫 ' + e.message;
+        hint.textContent  = 'Please contact the library administrator.';
+      }
+    }
+  };
+};
+
+window.doRFIDLogin = async () => {
+  if (!rfidData) return;
+  const pass = document.getElementById('rfidPass').value;
+  const err  = document.getElementById('rfidErr');
+  if (!pass) { showErr(err, 'Please enter your password.'); return; }
+  err.classList.remove('show');
+
+  try {
+    await loginWithCredentials(rfidData.email, pass);
+  } catch (e) {
+    showErr(err, e.message);
+  }
+};
+
+window.resetRFID = () => {
+  rfidData = null;
+  document.getElementById('rfidEmailRow').classList.add('hidden');
+  document.getElementById('rfidPass').value = '';
+  document.getElementById('rfidErr').classList.remove('show');
+  const label = document.getElementById('rfidLabel');
+  const hint  = document.getElementById('rfidHint');
+  label.textContent = 'Tap your RFID card';
+  hint.textContent  = 'Click here, then tap your card on the reader';
+  document.getElementById('rfidCapture').value = '';
+};
+
+// ── REGISTER ─────────────────────────────────────────────────
+let currentStep = 1;
+
+// Populate departments
+const deptSel = document.getElementById('rDept');
+Object.keys(DEPARTMENTS).forEach(d => {
+  const opt = document.createElement('option');
+  opt.value = d; opt.textContent = d;
+  deptSel.appendChild(opt);
+});
+
+window.fillPrograms = (dept) => {
+  const sel = document.getElementById('rProg');
+  sel.innerHTML = '<option value="">— Select Program —</option>';
+  (DEPARTMENTS[dept] || []).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p; opt.textContent = p;
+    sel.appendChild(opt);
+  });
+};
+
+window.toggleEmployeeMode = (on) => {
+  const idField = document.getElementById('rStudentId');
+  idField.disabled = on;
+  if (on) {
+    idField.value = '';
+    // pre-select ADMIN/Staff dept
+    deptSel.value = 'ADMIN / Staff';
+    window.fillPrograms('ADMIN / Staff');
+  }
+};
+
+window.regNext = (step) => {
+  if (step === 1) {
+    const first = document.getElementById('rFirst').value.trim();
+    const last  = document.getElementById('rLast').value.trim();
+    const sid   = document.getElementById('rStudentId').value.trim();
+    const isEmp = document.getElementById('rIsEmployee').checked;
+    const err   = document.getElementById('errStep1');
+    err.classList.remove('show');
+
+    if (!first || !last) { showErr(err, 'First and last name are required.'); return; }
+    if (!isEmp && sid && !/^\d{2}-\d{5}-\d{3}$/.test(sid)) {
+      document.getElementById('errStudentId').classList.add('show'); return;
+    }
+    goStep(2);
+  } else if (step === 2) {
+    const dept = document.getElementById('rDept').value;
+    const prog = document.getElementById('rProg').value;
+    const err  = document.getElementById('errStep2');
+    err.classList.remove('show');
+    if (!dept || !prog) { showErr(err, 'Please select your department and program.'); return; }
+    goStep(3);
+  }
+};
+
+window.regBack = (step) => goStep(step - 1);
+
+function goStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('regStep' + i).classList.toggle('active', i === n);
+    document.getElementById('rs' + i).classList.toggle('done', i <= n);
+  });
+  currentStep = n;
+}
+
+window.doRegister = async () => {
+  const email   = document.getElementById('rEmail').value.trim();
+  const pass    = document.getElementById('rPass').value;
+  const confirm = document.getElementById('rConfirm').value;
+  const err     = document.getElementById('errStep3');
+  const emailErr= document.getElementById('errEmail');
+  emailErr.classList.remove('show');
+  err.classList.remove('show');
+
+  if (!email.toLowerCase().endsWith('@neu.edu.ph')) {
+    emailErr.classList.add('show'); return;
+  }
+  if (pass.length < 8) { showErr(err, 'Password must be at least 8 characters.'); return; }
+  if (pass !== confirm){ showErr(err, 'Passwords do not match.'); return; }
+
+  const btn = document.getElementById('btnRegister');
+  setLoading(btn, true);
+
+  try {
+    await registerUser({
+      email,
+      password:      pass,
+      studentId:     document.getElementById('rStudentId').value,
+      firstName:     document.getElementById('rFirst').value.trim(),
+      lastName:      document.getElementById('rLast').value.trim(),
+      middleInitial: document.getElementById('rMI').value.trim(),
+      department:    document.getElementById('rDept').value,
+      program:       document.getElementById('rProg').value,
+      isEmployee:    document.getElementById('rIsEmployee').checked,
+      rfidId:        document.getElementById('rRfid').value.trim() || null
+    });
+    showToast('ok', 'Account Created!', 'Welcome to WissenLib. Signing you in…');
+    // redirect via onAuthChange
+  } catch (e) {
+    showErr(err, e.message);
+    setLoading(btn, false);
+  }
+};
+
+// ── RFID Registration capture ────────────────────────────────
+window.activateRegRFID = () => {
+  const cap  = document.getElementById('rfidRegCapture');
+  const zone = document.getElementById('rfidRegZone');
+  cap.value = ''; cap.focus();
+  zone.classList.add('listening');
+  cap.onkeydown = (e) => {
+    if (e.key === 'Enter' && cap.value.trim()) {
+      e.preventDefault();
+      document.getElementById('rRfid').value = cap.value.trim();
+      zone.querySelector('.rfid-label').textContent = '✅ RFID card registered';
+      zone.querySelector('.rfid-hint').textContent  = cap.value.trim();
+      zone.classList.remove('listening');
+    }
+  };
+};
+
+// ── Helpers ──────────────────────────────────────────────────
+window.fmtStudentId = (inp) => {
+  let v = inp.value.replace(/\D/g,'');
+  if (v.length > 2)  v = v.slice(0,2) + '-' + v.slice(2);
+  if (v.length > 8)  v = v.slice(0,8) + '-' + v.slice(8);
+  inp.value = v.slice(0, 13);
+  document.getElementById('errStudentId').classList.toggle('show',
+    v.replace(/-/g,'').length === 10 && !/^\d{2}-\d{5}-\d{3}$/.test(v)
+  );
+};
+
+window.togglePw = (id, btn) => {
+  const inp = document.getElementById(id);
+  const isText = inp.type === 'text';
+  inp.type = isText ? 'password' : 'text';
+  btn.textContent = isText ? '👁' : '🙈';
+};
+
+window.checkStrength = (val) => {
+  const bar = document.getElementById('strengthBar');
+  const lbl = document.getElementById('strengthLabel');
+  if (!val) { bar.style.background = 'var(--border)'; bar.style.width = '0'; lbl.textContent = ''; return; }
+  let score = 0;
+  if (val.length >= 8)  score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const colors = ['var(--err)','var(--warn)','#EAB308','var(--ok)'];
+  const labels = ['Weak','Fair','Good','Strong'];
+  bar.style.background = colors[score-1] || 'var(--border)';
+  bar.style.height = '3px';
+  lbl.textContent = labels[score-1] || '';
+  lbl.style.color = colors[score-1] || 'var(--muted)';
+};
+
+function showErr(el, msg) {
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function setLoading(btn, on) {
+  btn.disabled = on;
+  btn.innerHTML = on ? '<span class="spin"></span> Please wait…' : btn.dataset.orig || btn.innerHTML;
+  if (!btn.dataset.orig && on) btn.dataset.orig = btn.innerHTML;
+}
+
+// Toast system
+function showToast(type, title, body='', dur=4000) {
+  const icons = { ok:'✅', err:'❌', warn:'⚠️', info:'ℹ️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span>
+    <div class="toast-text"><div class="toast-title">${title}</div>${body?`<div class="toast-body">${body}</div>`:''}
+    </div>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), dur);
+}
+window.showToast = showToast;
+</script>
+</body>
+</html>

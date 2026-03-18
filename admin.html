@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="light" data-palette="golden">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>WissenLib — Admin Dashboard</title>
+<link rel="stylesheet" href="css/styles.css"/>
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- jsPDF + autoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
+<style>
+  body { overflow: hidden; }
+  .admin-main { overflow-y: auto; }
+  .role-badge {
+    display:inline-flex; align-items:center; gap:.375rem;
+    padding:.25rem .75rem; border-radius:999px;
+    font-size:.75rem; font-weight:700;
+    background: var(--p-10); color: var(--p);
+  }
+  .modal-bg { display:none; }
+  .modal-bg.open { display:flex; }
+  #chartCanvas { max-height: 260px; }
+
+  /* Sidebar collapse on small screens */
+  @media(max-width:768px){
+    body { overflow:auto; }
+    .admin-main { overflow-y:unset; }
+    .sidebar { position:fixed; left:-240px; z-index:300; transition:left .25s; }
+    .sidebar.open { left:0; box-shadow:4px 0 20px var(--shadow); }
+  }
+</style>
+</head>
+<body>
+
+<div id="toasts"></div>
+
+<!-- ════════════════════════════════════════════════════════
+     BLOCK USER MODAL
+════════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="blockModal">
+  <div class="modal-box">
+    <div class="modal-title" id="blockModalTitle">Block Visitor</div>
+    <div class="modal-body" id="blockModalBody">
+      Are you sure you want to block this visitor? They will no longer be able to log in.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeBlockModal()">Cancel</button>
+      <button class="btn btn-danger" id="btnConfirmBlock" onclick="confirmBlock()">Block User</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     LAYOUT
+════════════════════════════════════════════════════════ -->
+<div class="admin-layout" id="adminLayout">
+
+  <!-- ── SIDEBAR ────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon" style="width:32px;height:32px;font-size:1rem;border-radius:.5rem;">📚</div>
+      <div class="logo-sm">Wissen<span>Lib</span></div>
+    </div>
+
+    <nav>
+      <button class="nav-item active" onclick="setView('overview')" id="navOverview">
+        <span class="nav-icon">📊</span> Overview
+      </button>
+      <button class="nav-item" onclick="setView('log')" id="navLog">
+        <span class="nav-icon">📋</span> Visitor Log
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div id="adminInfo" style="padding:.5rem;font-size:.8rem;color:var(--muted);margin-bottom:.75rem;"></div>
+      <button class="nav-item" onclick="doLogout()" style="color:var(--err);">
+        <span class="nav-icon">🚪</span> Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ──────────────────────────────────────────── -->
+  <main class="admin-main" id="adminMain">
+
+    <!-- Topbar -->
+    <div class="admin-topbar">
+      <div style="display:flex;align-items:center;gap:.875rem;">
+        <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()" style="display:none;" id="btnToggleSidebar">☰</button>
+        <div>
+          <div class="admin-topbar-title" id="viewTitle">Dashboard Overview</div>
+          <div style="font-size:.775rem;color:var(--muted);" id="viewSub">NEU Library Visitor Analytics</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+        <div id="adminBadge" class="role-badge">🛡️ Admin</div>
+        <div id="themeBar" class="theme-bar" style="position:static;box-shadow:none;"></div>
+      </div>
+    </div>
+
+    <!-- ════ OVERVIEW VIEW ═══════════════════════════════ -->
+    <div class="admin-content" id="viewOverview">
+
+      <!-- Date range controls -->
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+        <div class="tabs" style="width:auto;margin-bottom:0;">
+          <button class="tab active" onclick="setRange('today')"  id="rToday">Today</button>
+          <button class="tab"        onclick="setRange('week')"   id="rWeek">This Week</button>
+          <button class="tab"        onclick="setRange('month')"  id="rMonth">This Month</button>
+          <button class="tab"        onclick="setRange('custom')" id="rCustom">Custom</button>
+        </div>
+        <div id="customRangeRow" class="date-range hidden">
+          <input class="inp" type="date" id="dateFrom" style="width:auto;" />
+          <span style="color:var(--muted);">—</span>
+          <input class="inp" type="date" id="dateTo"   style="width:auto;" />
+          <button class="btn btn-primary btn-sm" onclick="applyCustomRange()">Apply</button>
+        </div>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="stat-grid" id="statGrid">
+        <div class="stat-card">
+          <div class="stat-num" id="sTotal">—</div>
+          <div class="stat-label">Total Visitors</div>
+          <div class="stat-sub" id="sRange">Loading…</div>
+        </div>
+        <div class="stat-card secondary">
+          <div class="stat-num" id="sToday2">—</div>
+          <div class="stat-label">Today</div>
+          <div class="stat-sub" id="sTodayDate"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="sCICS">—</div>
+          <div class="stat-label">Top Dept.</div>
+          <div class="stat-sub" id="sTopDept">By visits</div>
+        </div>
+        <div class="stat-card secondary">
+          <div class="stat-num" id="sEmployee">—</div>
+          <div class="stat-label">Faculty / Staff</div>
+          <div class="stat-sub">Visits recorded</div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-wrap">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <div class="chart-title">📈 Daily Visitor Activity</div>
+          <button class="btn btn-ghost btn-sm" onclick="exportPDF()">⬇ Export PDF</button>
+        </div>
+        <canvas id="chartCanvas"></canvas>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <div class="field filter-field">
+          <label>Search</label>
+          <div class="inp-icon-wrap">
+            <span class="inp-icon">🔍</span>
+            <input class="inp" id="fSearch" type="text" placeholder="Name, ID, program…"
+              oninput="applyFilters()" />
+          </div>
+        </div>
+        <div class="field filter-field">
+          <label>Reason</label>
+          <select class="inp" id="fReason" onchange="applyFilters()">
+            <option value="">All Reasons</option>
+            <option>Study</option>
+            <option>Research</option>
+            <option>Borrow / Return</option>
+            <option>Group Study</option>
+            <option>Internet Access</option>
+            <option>Others</option>
+          </select>
+        </div>
+        <div class="field filter-field">
+          <label>College</label>
+          <select class="inp" id="fDept" onchange="applyFilters()">
+            <option value="">All Colleges</option>
+          </select>
+        </div>
+        <div class="field">
+          <label style="opacity:0;">.</label>
+          <label class="check-row">
+            <input type="checkbox" id="fEmployee" onchange="applyFilters()" />
+            <span>Faculty / Staff only</span>
+          </label>
+        </div>
+        <div class="field">
+          <label style="opacity:0;">.</label>
+          <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear</button>
+        </div>
+      </div>
+
+      <!-- Visitor table -->
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <div class="table-toolbar-title">Visitor Log</div>
+          <div style="display:flex;gap:.5rem;">
+            <span id="recordCount" style="font-size:.8rem;color:var(--muted);align-self:center;"></span>
+            <button class="btn btn-ghost btn-sm" onclick="exportPDF()">⬇ PDF</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Student ID</th>
+                <th>Department</th>
+                <th>Program</th>
+                <th>Reason for Visit</th>
+                <th>Check-In</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="visitTableBody">
+              <tr><td colspan="10" class="table-empty">
+                <span class="spin spin-p"></span> Loading visits…
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="page-info" id="pageInfo"></div>
+          <button class="btn btn-ghost btn-sm" id="btnPrev" onclick="changePage(-1)">← Prev</button>
+          <button class="btn btn-ghost btn-sm" id="btnNext" onclick="changePage(1)">Next →</button>
+        </div>
+      </div>
+
+    </div><!-- /viewOverview -->
+
+  </main>
+</div><!-- /admin-layout -->
+
+<!-- ── Script ─────────────────────────────────────────────── -->
+<script type="module">
+import { initTheme, buildThemeBar } from './js/theme.js';
+import { auth, db, DEPARTMENTS } from './js/firebase-config.js';
+import { getUserRole, getUserData, setUserBlocked, logout, onAuthChange } from './js/auth.js';
+import {
+  collection, query, where, orderBy, getDocs, doc, getDoc,
+  Timestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+// ── Theme ─────────────────────────────────────────────────
+const { mode, palette } = initTheme();
+buildThemeBar(mode, palette);
+
+// ── Dept filter options ───────────────────────────────────
+const deptSel = document.getElementById('fDept');
+Object.keys(DEPARTMENTS).forEach(d => {
+  const o = document.createElement('option'); o.value = d; o.textContent = d;
+  deptSel.appendChild(o);
+});
+
+// ── State ─────────────────────────────────────────────────
+let allVisits   = [];
+let filtered    = [];
+let currentPage = 1;
+const PAGE_SIZE = 15;
+let chartInstance = null;
+let rangeMode   = 'today';
+let customFrom  = '';
+let customTo    = '';
+let blockTarget = null;   // { uid, name, action }
+
+// ── Auth guard ────────────────────────────────────────────
+let adminUser = null;
+onAuthStateChanged(auth, async user => {
+  if (!user) { window.location.href = 'index.html'; return; }
+  try {
+    const role = await getUserRole(user.uid);
+    if (role !== 'admin') { window.location.href = 'checkin.html'; return; }
+    adminUser = user;
+    const data = await getUserData(user.uid);
+    document.getElementById('adminInfo').innerHTML =
+      `<b>${data?.firstName || ''} ${data?.lastName || ''}</b><br>${user.email}`;
+    loadData();
+  } catch(e) {
+    toast('err','Access Denied', e.message);
+    await logout();
+    window.location.href = 'index.html';
+  }
+});
+
+// ── Date helpers ──────────────────────────────────────────
+function todayStr() { return new Date().toISOString().slice(0,10); }
+
+function weekRange() {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun
+  const mon = new Date(now); mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+  return { from: mon.toISOString().slice(0,10), to: todayStr() };
+}
+
+function monthRange() {
+  const now = new Date();
+  return {
+    from: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`,
+    to: todayStr()
+  };
+}
+
+function getDateRange() {
+  if (rangeMode === 'today')  return { from: todayStr(), to: todayStr() };
+  if (rangeMode === 'week')   return weekRange();
+  if (rangeMode === 'month')  return monthRange();
+  return { from: customFrom || todayStr(), to: customTo || todayStr() };
+}
+
+// ── Load visits ───────────────────────────────────────────
+async function loadData() {
+  const { from, to } = getDateRange();
+  updateStatSub(from, to);
+
+  try {
+    const q = query(
+      collection(db, 'visits'),
+      where('date', '>=', from),
+      where('date', '<=', to),
+      orderBy('date', 'desc')
+    );
+    const snap = await getDocs(q);
+    allVisits = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    applyFilters();
+    buildChart(from, to);
+    updateStatCards();
+  } catch(e) {
+    toast('err', 'Load Error', e.message);
+  }
+}
+
+// ── Stats ─────────────────────────────────────────────────
+function updateStatCards() {
+  const today = todayStr();
+  document.getElementById('sTotal').textContent    = filtered.length;
+  document.getElementById('sToday2').textContent   = allVisits.filter(v => v.date === today).length;
+  document.getElementById('sTodayDate').textContent = fmtDate(today);
+  document.getElementById('sEmployee').textContent = allVisits.filter(v => v.isEmployee).length;
+
+  // Top dept
+  const deptCount = {};
+  allVisits.forEach(v => { if(v.department) deptCount[v.department] = (deptCount[v.department]||0)+1; });
+  const top = Object.entries(deptCount).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('sCICS').textContent  = top ? top[1] : '—';
+  document.getElementById('sTopDept').textContent = top ? top[0] : 'No data';
+}
+
+function updateStatSub(from, to) {
+  const label = from === to ? fmtDate(from) : `${fmtDate(from)} – ${fmtDate(to)}`;
+  document.getElementById('sRange').textContent = label;
+}
+
+// ── Chart ─────────────────────────────────────────────────
+function buildChart(from, to) {
+  const days = getDaysBetween(from, to);
+  const countMap = {};
+  days.forEach(d => countMap[d] = 0);
+  allVisits.forEach(v => { if (countMap[v.date] !== undefined) countMap[v.date]++; });
+
+  const labels = days.map(d => fmtDateShort(d));
+  const data   = days.map(d => countMap[d]);
+
+  const cs = getComputedStyle(document.documentElement);
+  const p  = cs.getPropertyValue('--p').trim();
+  const s  = cs.getPropertyValue('--s').trim();
+
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(document.getElementById('chartCanvas'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Visitors',
+        data,
+        backgroundColor: p + '88',
+        borderColor: p,
+        borderWidth: 2,
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.raw} visitor${ctx.raw !== 1 ? 's' : ''}` } }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: cs.getPropertyValue('--muted').trim(), font: { family: 'Inter', size: 11 } }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            color: cs.getPropertyValue('--muted').trim(),
+            font: { family: 'Inter', size: 11 }
+          },
+          grid: { color: cs.getPropertyValue('--border').trim() + '88' }
+        }
+      }
+    }
+  });
+}
+
+function getDaysBetween(from, to) {
+  const days = []; const cur = new Date(from + 'T00:00:00');
+  const end  = new Date(to   + 'T00:00:00');
+  while (cur <= end) {
+    days.push(cur.toISOString().slice(0,10));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return days;
+}
+
+// ── Filters ───────────────────────────────────────────────
+window.applyFilters = () => {
+  const search   = document.getElementById('fSearch').value.trim().toLowerCase();
+  const reason   = document.getElementById('fReason').value;
+  const dept     = document.getElementById('fDept').value;
+  const empOnly  = document.getElementById('fEmployee').checked;
+
+  filtered = allVisits.filter(v => {
+    if (empOnly && !v.isEmployee) return false;
+    if (dept   && v.department !== dept) return false;
+    if (reason && !v.reasonForVisit?.startsWith(reason)) return false;
+    if (search) {
+      const hay = [v.fullName, v.studentId, v.program, v.department, v.email, v.reasonForVisit]
+        .join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  currentPage = 1;
+  renderTable();
+  updateStatCards();
+};
+
+window.clearFilters = () => {
+  document.getElementById('fSearch').value  = '';
+  document.getElementById('fReason').value  = '';
+  document.getElementById('fDept').value    = '';
+  document.getElementById('fEmployee').checked = false;
+  applyFilters();
+};
+
+// ── Table ─────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('visitTableBody');
+  const total = filtered.length;
+  const pages = Math.ceil(total / PAGE_SIZE) || 1;
+  currentPage = Math.min(currentPage, pages);
+
+  const start  = (currentPage - 1) * PAGE_SIZE;
+  const end    = Math.min(start + PAGE_SIZE, total);
+  const rows   = filtered.slice(start, end);
+
+  document.getElementById('recordCount').textContent = `${total} record${total !== 1 ? 's' : ''}`;
+  document.getElementById('pageInfo').textContent =
+    total === 0 ? 'No records' : `Showing ${start+1}–${end} of ${total}`;
+  document.getElementById('btnPrev').disabled = currentPage <= 1;
+  document.getElementById('btnNext').disabled = currentPage >= pages;
+
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" class="table-empty">No matching records found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map((v, i) => {
+    const dt = v.checkInTimeISO
+      ? new Date(v.checkInTimeISO).toLocaleString('en-PH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})
+      : v.date;
+    const isBlocked = v.userBlocked;
+    return `
+    <tr>
+      <td>${start + i + 1}</td>
+      <td><b>${esc(v.fullName || '—')}</b><br><span class="text-sm text-muted">${esc(v.email||'')}</span></td>
+      <td>${esc(v.studentId || '—')}</td>
+      <td>${esc(v.department || '—')}</td>
+      <td>${esc(v.program || '—')}</td>
+      <td style="max-width:180px;" class="truncate" title="${esc(v.reasonForVisit||'')}">${esc(v.reasonForVisit||'—')}</td>
+      <td>${dt}</td>
+      <td>${v.isEmployee ? '<span class="badge badge-blue">Staff</span>' : '<span class="badge badge-ok">Student</span>'}</td>
+      <td id="status-${v.id}">—</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" id="blockBtn-${v.id}"
+          onclick="openBlockModal('${v.id}','${esc(v.fullName||'Visitor')}','${v.uid||''}')">
+          Block
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Load block status async per uid
+  rows.forEach(v => {
+    if (!v.uid) return;
+    loadBlockStatus(v.uid, v.id);
+  });
+}
+
+async function loadBlockStatus(uid, visitId) {
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) return;
+    const blocked = snap.data().blocked;
+    const statusEl = document.getElementById(`status-${visitId}`);
+    const btnEl    = document.getElementById(`blockBtn-${visitId}`);
+    if (statusEl) statusEl.innerHTML = blocked
+      ? '<span class="badge badge-err">Blocked</span>'
+      : '<span class="badge badge-ok">Active</span>';
+    if (btnEl) {
+      btnEl.textContent = blocked ? 'Unblock' : 'Block';
+      btnEl.className   = blocked ? 'btn btn-secondary btn-sm' : 'btn btn-ghost btn-sm';
+      btnEl.onclick = () => openBlockModal(visitId, snap.data().firstName + ' ' + snap.data().lastName, uid, blocked);
+    }
+  } catch(_) {}
+}
+
+window.changePage = (dir) => { currentPage += dir; renderTable(); };
+
+// ── Block/Unblock ─────────────────────────────────────────
+window.openBlockModal = (visitId, name, uid, currentlyBlocked=false) => {
+  blockTarget = { visitId, name, uid, currentlyBlocked };
+  document.getElementById('blockModalTitle').textContent =
+    currentlyBlocked ? 'Unblock Visitor' : 'Block Visitor';
+  document.getElementById('blockModalBody').innerHTML = currentlyBlocked
+    ? `Unblock <b>${esc(name)}</b>? They will be able to log in again.`
+    : `Block <b>${esc(name)}</b>? They will not be able to log in until unblocked.`;
+  document.getElementById('btnConfirmBlock').textContent = currentlyBlocked ? 'Unblock' : 'Block';
+  document.getElementById('btnConfirmBlock').className = currentlyBlocked ? 'btn btn-primary' : 'btn btn-danger';
+  document.getElementById('blockModal').classList.add('open');
+};
+
+window.closeBlockModal = () => {
+  document.getElementById('blockModal').classList.remove('open');
+  blockTarget = null;
+};
+
+window.confirmBlock = async () => {
+  if (!blockTarget?.uid) { closeBlockModal(); return; }
+  const btn = document.getElementById('btnConfirmBlock');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>';
+
+  try {
+    const newState = !blockTarget.currentlyBlocked;
+    await setUserBlocked(blockTarget.uid, newState);
+    toast(newState ? 'warn' : 'ok',
+      newState ? 'User Blocked' : 'User Unblocked',
+      `${blockTarget.name} has been ${newState ? 'blocked' : 'unblocked'}.`);
+    closeBlockModal();
+    loadData();
+  } catch(e) {
+    toast('err', 'Error', e.message);
+    btn.disabled = false;
+    btn.textContent = 'Confirm';
+  }
+};
+
+// ── Range controls ────────────────────────────────────────
+window.setRange = (r) => {
+  rangeMode = r;
+  ['today','week','month','custom'].forEach(n => {
+    document.getElementById('r' + n.charAt(0).toUpperCase() + n.slice(1))
+      .classList.toggle('active', n === r);
+  });
+  document.getElementById('customRangeRow').classList.toggle('hidden', r !== 'custom');
+  if (r !== 'custom') loadData();
+};
+
+window.applyCustomRange = () => {
+  customFrom = document.getElementById('dateFrom').value;
+  customTo   = document.getElementById('dateTo').value;
+  if (!customFrom || !customTo) { toast('warn','Missing Dates','Please select both dates.'); return; }
+  if (customFrom > customTo) { toast('warn','Invalid Range','Start date must be before end date.'); return; }
+  loadData();
+};
+
+// ── Nav views ─────────────────────────────────────────────
+window.setView = (v) => {
+  document.getElementById('navOverview').classList.toggle('active', v === 'overview');
+  document.getElementById('navLog').classList.toggle('active', v === 'log');
+  document.getElementById('viewTitle').textContent = v === 'overview' ? 'Dashboard Overview' : 'Visitor Log';
+  // All content is in overview for now (log scrolls to table)
+  if (v === 'log') {
+    document.querySelector('.table-wrap').scrollIntoView({ behavior:'smooth' });
+  }
+};
+
+window.toggleSidebar = () => {
+  document.getElementById('sidebar').classList.toggle('open');
+};
+
+// ── Export PDF ────────────────────────────────────────────
+window.exportPDF = () => {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+  // Header
+  pdf.setFontSize(18); pdf.setFont('helvetica','bold');
+  pdf.text('WissenLib — NEU Library Visitor Report', 14, 18);
+  pdf.setFontSize(10); pdf.setFont('helvetica','normal');
+  const { from, to } = getDateRange();
+  pdf.text(`Date Range: ${fmtDate(from)} – ${fmtDate(to)}`, 14, 26);
+  pdf.text(`Generated: ${new Date().toLocaleString('en-PH')}   Total: ${filtered.length} record(s)`, 14, 32);
+
+  // Stats summary
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(11);
+  pdf.text(`Total: ${filtered.length}   |   Today: ${allVisits.filter(v=>v.date===todayStr()).length}   |   Faculty/Staff: ${allVisits.filter(v=>v.isEmployee).length}`, 14, 40);
+
+  // Table
+  pdf.autoTable({
+    startY: 46,
+    head: [['#','Name','Student ID','Dept.','Program','Reason','Check-In','Type']],
+    body: filtered.map((v, i) => [
+      i + 1,
+      v.fullName || '—',
+      v.studentId || '—',
+      v.department || '—',
+      v.program || '—',
+      v.reasonForVisit || '—',
+      v.checkInTimeISO
+        ? new Date(v.checkInTimeISO).toLocaleString('en-PH')
+        : v.date,
+      v.isEmployee ? 'Staff' : 'Student'
+    ]),
+    styles:      { fontSize: 8, cellPadding: 3 },
+    headStyles:  { fillColor: [26, 72, 148], fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [245, 248, 255] },
+    margin: { top: 46 }
+  });
+
+  const fname = `WissenLib_Report_${from}_to_${to}.pdf`;
+  pdf.save(fname);
+  toast('ok','PDF Exported', fname);
+};
+
+// ── Logout ────────────────────────────────────────────────
+window.doLogout = async () => { await logout(); window.location.href = 'index.html'; };
+
+// ── Helpers ───────────────────────────────────────────────
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
+}
+function fmtDateShort(d) {
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-PH',{month:'short',day:'numeric'});
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(type, title, body='') {
+  const icons = { ok:'✅', err:'❌', warn:'⚠️', info:'ℹ️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span>
+    <div class="toast-text"><div class="toast-title">${title}</div>${body?`<div class="toast-body">${body}</div>`:''}</div>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4500);
+}
+window.toast = toast;
+</script>
+</body>
+</html>

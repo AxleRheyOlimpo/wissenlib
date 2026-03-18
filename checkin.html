@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="light" data-palette="golden">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>WissenLib — Check In</title>
+<link rel="stylesheet" href="css/styles.css"/>
+<style>
+  .others-box { display:none; margin-top:.75rem; }
+  .others-box.show { display:block; }
+  .clock { font-size:.875rem; color:var(--text2); font-weight:500; font-variant-numeric:tabular-nums; }
+  .checkin-success {
+    display:none; text-align:center; padding:2rem 1rem;
+    animation: fadeIn .4s ease;
+  }
+  .checkin-success.show { display:block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+  .big-check { font-size:4rem; display:block; margin-bottom:1rem; }
+  .success-name { font-size:1.5rem; font-weight:800; letter-spacing:-.02em; }
+  .success-sub  { font-size:.9rem; color:var(--text2); margin-top:.35rem; }
+  .new-checkin-btn { margin-top:1.5rem; }
+</style>
+</head>
+<body class="checkin-page">
+
+<!-- ── Theme Bar ──────────────────────────────────────────── -->
+<div id="themeBar" class="theme-bar"></div>
+<div id="toasts"></div>
+
+<!-- ── Top Bar ────────────────────────────────────────────── -->
+<div class="checkin-topbar">
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <div class="logo-icon" style="width:34px;height:34px;border-radius:.5rem;font-size:1.1rem;">📚</div>
+    <div>
+      <div style="font-size:.9375rem;font-weight:800;letter-spacing:-.02em;">WissenLib</div>
+      <div style="font-size:.725rem;color:var(--muted);">NEU Library</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:1rem;">
+    <div class="clock" id="clock"></div>
+    <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign Out</button>
+  </div>
+</div>
+
+<!-- ── Body ───────────────────────────────────────────────── -->
+<div class="checkin-body">
+  <div class="checkin-card" id="checkinCard">
+
+    <!-- Welcome banner (populated by JS) -->
+    <div class="welcome-banner" id="welcomeBanner">
+      <div class="greeting">Welcome back,</div>
+      <div class="name" id="visitorName">Loading…</div>
+      <div class="prog" id="visitorProg"></div>
+      <div class="msg">Please select your reason for visiting the library today.</div>
+    </div>
+
+    <!-- Reason for visit -->
+    <p class="section-head">Reason for Visit</p>
+    <div class="reason-grid" id="reasonGrid">
+      <div class="reason-tile" onclick="selectReason(this,'Study')" data-reason="Study">
+        <span class="icon">📖</span>Study
+      </div>
+      <div class="reason-tile" onclick="selectReason(this,'Research')" data-reason="Research">
+        <span class="icon">🔬</span>Research
+      </div>
+      <div class="reason-tile" onclick="selectReason(this,'Borrow / Return')" data-reason="Borrow / Return">
+        <span class="icon">📦</span>Borrow / Return
+      </div>
+      <div class="reason-tile" onclick="selectReason(this,'Group Study')" data-reason="Group Study">
+        <span class="icon">👥</span>Group Study
+      </div>
+      <div class="reason-tile" onclick="selectReason(this,'Internet Access')" data-reason="Internet Access">
+        <span class="icon">💻</span>Internet Access
+      </div>
+      <div class="reason-tile" onclick="selectReason(this,'Others')" data-reason="Others">
+        <span class="icon">✏️</span>Others
+      </div>
+    </div>
+
+    <!-- Others text area -->
+    <div class="others-box" id="othersBox">
+      <label for="othersText">Please describe your reason</label>
+      <textarea class="inp" id="othersText" rows="3"
+        placeholder="e.g. Meet with professor, thesis defense review…"
+        style="resize:vertical;"></textarea>
+    </div>
+
+    <div class="err-msg" id="checkinErr" style="display:none;"></div>
+
+    <button class="btn btn-primary btn-full mt-2" id="btnCheckin"
+      onclick="doCheckin()" style="padding:.875rem;">
+      ✅ &nbsp;Confirm Check-In
+    </button>
+
+    <!-- ── Success screen ──────────────────────────────────── -->
+    <div class="checkin-success" id="successScreen">
+      <span class="big-check">🎉</span>
+      <div class="success-name" id="successName"></div>
+      <div class="success-sub" id="successSub"></div>
+      <div style="margin-top:1.25rem;padding:1rem;background:var(--p-10);border-radius:var(--radius);font-size:.875rem;color:var(--p);font-weight:600;">
+        Welcome to NEU Library! Enjoy your visit.
+      </div>
+      <button class="btn btn-ghost btn-full new-checkin-btn" onclick="resetCheckin()">
+        Done (Back to Home)
+      </button>
+    </div>
+
+  </div><!-- /checkin-card -->
+</div>
+
+<script type="module">
+import { initTheme, buildThemeBar } from './js/theme.js';
+import { auth, db } from './js/firebase-config.js';
+import { getUserRole, getUserData, logout, onAuthChange } from './js/auth.js';
+import {
+  collection, addDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+// Theme
+const { mode, palette } = initTheme();
+buildThemeBar(mode, palette);
+
+// Clock
+function tick() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric'}) + ' • ' +
+    now.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'});
+}
+tick(); setInterval(tick, 1000);
+
+// Auth guard
+let currentUser = null;
+let profileData = null;
+let selectedReason = '';
+
+onAuthStateChanged(auth, async user => {
+  if (!user) { window.location.href = 'index.html'; return; }
+  try {
+    const role = await getUserRole(user.uid);
+    if (role === 'admin') { window.location.href = 'admin.html'; return; }
+    currentUser = user;
+    profileData = await getUserData(user.uid);
+    renderWelcome();
+  } catch(e) {
+    toast('err','Access Denied', e.message);
+    await logout();
+    window.location.href = 'index.html';
+  }
+});
+
+function renderWelcome() {
+  if (!profileData) return;
+  const fn = profileData.firstName || '';
+  const ln = profileData.lastName  || '';
+  document.getElementById('visitorName').textContent =
+    `${fn} ${profileData.middleInitial ? profileData.middleInitial + '. ' : ''}${ln}`;
+  document.getElementById('visitorProg').textContent =
+    [profileData.program, profileData.department].filter(Boolean).join(' · ');
+}
+
+// Reason selection
+window.selectReason = (el, reason) => {
+  document.querySelectorAll('.reason-tile').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  selectedReason = reason;
+  document.getElementById('othersBox').classList.toggle('show', reason === 'Others');
+  document.getElementById('checkinErr').style.display = 'none';
+};
+
+// Check-in
+window.doCheckin = async () => {
+  const errEl = document.getElementById('checkinErr');
+  errEl.style.display = 'none';
+
+  if (!selectedReason) {
+    errEl.textContent = 'Please select a reason for your visit.';
+    errEl.style.display = 'block'; return;
+  }
+
+  let reason = selectedReason;
+  if (reason === 'Others') {
+    const txt = document.getElementById('othersText').value.trim();
+    if (!txt) {
+      errEl.textContent = 'Please describe your reason for visiting.';
+      errEl.style.display = 'block'; return;
+    }
+    reason = 'Others: ' + txt;
+  }
+
+  const btn = document.getElementById('btnCheckin');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Checking in…';
+
+  try {
+    const now  = new Date();
+    const date = now.toISOString().slice(0,10); // YYYY-MM-DD
+
+    await addDoc(collection(db, 'visits'), {
+      uid:          currentUser.uid,
+      email:        profileData.email        || '',
+      studentId:    profileData.studentId    || '',
+      firstName:    profileData.firstName    || '',
+      lastName:     profileData.lastName     || '',
+      fullName:     `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim(),
+      middleInitial:profileData.middleInitial|| '',
+      department:   profileData.department   || '',
+      program:      profileData.program      || '',
+      isEmployee:   profileData.isEmployee   || false,
+      reasonForVisit: reason,
+      date,
+      checkInTime:  serverTimestamp(),
+      checkInTimeISO: now.toISOString()
+    });
+
+    showSuccess(reason);
+  } catch(e) {
+    errEl.textContent = 'Error saving check-in: ' + e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '✅ &nbsp;Confirm Check-In';
+  }
+};
+
+function showSuccess(reason) {
+  const fn = profileData.firstName || '';
+  const ln = profileData.lastName  || '';
+  document.getElementById('successName').textContent = `${fn} ${ln}`;
+  document.getElementById('successSub').textContent  =
+    `${profileData.program || ''} — ${reason}`;
+
+  // Hide the form, show success
+  document.querySelectorAll(
+    '.welcome-banner, .section-head, .reason-grid, .others-box, #checkinErr, #btnCheckin'
+  ).forEach(el => el.style.display = 'none');
+  document.getElementById('successScreen').classList.add('show');
+
+  toast('ok','Checked In!', 'Your visit has been recorded.');
+}
+
+window.resetCheckin = () => {
+  // Reset form
+  selectedReason = '';
+  document.querySelectorAll('.reason-tile').forEach(t => t.classList.remove('active'));
+  document.getElementById('othersText').value = '';
+  document.getElementById('othersBox').classList.remove('show');
+
+  // Show form, hide success
+  document.querySelectorAll(
+    '.welcome-banner, .section-head, .reason-grid, #btnCheckin'
+  ).forEach(el => el.style.display = '');
+  const btn = document.getElementById('btnCheckin');
+  btn.disabled = false; btn.innerHTML = '✅ &nbsp;Confirm Check-In';
+  document.getElementById('successScreen').classList.remove('show');
+};
+
+window.doLogout = async () => {
+  await logout();
+  window.location.href = 'index.html';
+};
+
+function toast(type, title, body='') {
+  const icons = { ok:'✅', err:'❌', warn:'⚠️', info:'ℹ️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span>
+    <div class="toast-text"><div class="toast-title">${title}</div>${body?`<div class="toast-body">${body}</div>`:''}</div>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+</script>
+</body>
+</html>

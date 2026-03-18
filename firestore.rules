@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (
+          request.auth.token.email == 'jcesperanza@neu.edu.ph' ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        );
+    }
+
+    function isNEUEmail() {
+      return request.auth.token.email.matches('.*@neu\\.edu\\.ph$');
+    }
+
+    function isNotBlocked() {
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.blocked == false;
+    }
+
+    // ── Users collection ────────────────────────────────────
+    match /users/{uid} {
+      // Any authenticated NEU user can read their own profile
+      allow read: if isAuthenticated() && (isOwner(uid) || isAdmin());
+
+      // Allow creating your own user doc on registration
+      allow create: if isAuthenticated() && isOwner(uid) && isNEUEmail()
+        && request.resource.data.role == 'visitor';   // Can't self-assign admin
+
+      // Allow updating your own profile (but not role or blocked status)
+      allow update: if isAuthenticated() && isOwner(uid) && isNEUEmail()
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['role', 'blocked', 'uid', 'createdAt'])
+        || isAdmin();  // Admins can update anything
+
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+
+    // ── RFID lookup (allow listing by rfidId for sign-in) ───
+    // NOTE: This allows any authenticated user to query users by rfidId.
+    // In production, secure this further or use a Cloud Function.
+    match /users/{uid} {
+      allow list: if isAuthenticated() && isNEUEmail();
+    }
+
+    // ── Visits collection ───────────────────────────────────
+    match /visits/{visitId} {
+      // Any authenticated, non-blocked NEU user can create a visit record
+      allow create: if isAuthenticated() && isNEUEmail() && isNotBlocked()
+        && request.resource.data.uid == request.auth.uid;
+
+      // Users can read their own visits; admins can read all
+      allow read: if isAuthenticated() && (
+        resource.data.uid == request.auth.uid || isAdmin()
+      );
+
+      // Only admins can update or delete visit records
+      allow update, delete: if isAdmin();
+
+      // Admins can list all visits (for dashboard queries)
+      allow list: if isAdmin();
+    }
+  }
+}
