@@ -179,7 +179,11 @@ onAuthStateChanged(auth, async user => {
   if (!user) { window.location.href = 'index.html'; return; }
   try {
     const role = await getUserRole(user.uid);
-    if (role === 'admin') { window.location.href = 'admin.html'; return; }
+    if (role === 'admin' && sessionStorage.getItem('adminAsVisitor') !== '1') {
+      window.location.href = 'admin.html'; return;
+    }
+    // Clear the flag after use
+    sessionStorage.removeItem('adminAsVisitor');
     currentUser = user;
     profileData = await getUserData(user.uid);
 
@@ -347,6 +351,7 @@ window.resetCheckin = () => {
 };
 
 window.doLogout = async () => {
+  sessionStorage.removeItem('adminAsVisitor');
   await logout();
   window.location.href = 'index.html';
 };
