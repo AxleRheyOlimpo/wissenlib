@@ -172,9 +172,8 @@ let currentUser = null;
 let profileData = null;
 let selectedReason = '';
 
-// Read and immediately clear the admin-as-visitor flag at page load
-const isAdminVisitor = sessionStorage.getItem('adminAsVisitor') === '1';
-sessionStorage.removeItem('adminAsVisitor');
+// Check if admin is explicitly choosing visitor mode via URL param
+const isAdminVisitor = new URLSearchParams(window.location.search).get('mode') === 'visitor';
 
 // Disable check-in until profile is ready
 document.getElementById('btnCheckin').disabled = true;
@@ -353,7 +352,6 @@ window.resetCheckin = () => {
 };
 
 window.doLogout = async () => {
-  sessionStorage.removeItem('adminAsVisitor');
   await logout();
   window.location.href = 'index.html';
 };

@@ -403,7 +403,7 @@ function showAdminChoice(user) {
         " onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
           Admin Dashboard
         </button>
-        <button onclick="sessionStorage.setItem('adminAsVisitor','1');window.location.href='checkin.html'" style="
+        <button onclick="window.location.href='checkin.html?mode=visitor'" style="
           padding:1rem; border-radius:var(--radius); cursor:pointer;
           background:var(--surface); border:1.5px solid var(--border);
           color:var(--text); font-size:.9rem; font-weight:700;
