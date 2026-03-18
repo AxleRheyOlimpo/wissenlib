@@ -74,7 +74,7 @@
     </nav>
 
     <div class="sidebar-footer">
-      <div id="adminInfo" style="padding:.5rem;font-size:.8rem;color:var(--muted);margin-bottom:.75rem;"></div>
+      <div id="adminInfo" style="padding:.5rem;font-size:.78rem;color:var(--muted);margin-bottom:.75rem;word-break:break-all;line-height:1.4;"></div>
       <button class="nav-item" onclick="doLogout()" style="color:var(--err);">
         <span class="nav-icon">🚪</span> Sign Out
       </button>
@@ -156,6 +156,7 @@
         <div class="field filter-field">
           <label>Search</label>
           <div class="inp-icon-wrap">
+            <span class="inp-icon">🔍</span>
             <input class="inp" id="fSearch" type="text" placeholder="Name, ID, program…"
               oninput="applyFilters()" />
           </div>
@@ -491,7 +492,7 @@ function renderTable() {
       <td>${v.isEmployee ? '<span class="badge badge-blue">Staff</span>' : '<span class="badge badge-ok">Student</span>'}</td>
       <td id="status-${v.id}">—</td>
       <td>
-        <button class="btn btn-ghost btn-sm" id="blockBtn-${v.id}"
+        <button class="btn btn-danger btn-sm" id="blockBtn-${v.id}"
           onclick="openBlockModal('${v.id}','${esc(v.fullName||'Visitor')}','${v.uid||''}')">
           Block
         </button>
@@ -518,7 +519,7 @@ async function loadBlockStatus(uid, visitId) {
       : '<span class="badge badge-ok">Active</span>';
     if (btnEl) {
       btnEl.textContent = blocked ? 'Unblock' : 'Block';
-      btnEl.className   = blocked ? 'btn btn-secondary btn-sm' : 'btn btn-ghost btn-sm';
+      btnEl.className   = blocked ? 'btn btn-primary btn-sm' : 'btn btn-danger btn-sm';
       btnEl.onclick = () => openBlockModal(visitId, snap.data().firstName + ' ' + snap.data().lastName, uid, blocked);
     }
   } catch(_) {}
