@@ -6,12 +6,12 @@ import { getAuth }        from "https://www.gstatic.com/firebasejs/10.12.2/fireb
 import { getFirestore }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey: "AIzaSyBFhA_a8PpX_cXPKJPjdDISmbLn6_flw6g",
+  authDomain: "wissenlib-neu.firebaseapp.com",
+  projectId: "wissenlib-neu",
+  storageBucket: "wissenlib-neu.firebasestorage.app",
+  messagingSenderId: "116880882776",
+  appId: "1:116880882776:web:58a9c24443d92375009e2d"
 };
 
 const app = initializeApp(firebaseConfig);
