@@ -7,7 +7,7 @@ import { getFirestore }   from "https://www.gstatic.com/firebasejs/10.12.2/fireb
 
 const firebaseConfig = {
   apiKey: "AIzaSyBFhA_a8PpX_cXPKJPjdDISmbLn6_flw6g",
-  authDomain: "wissenlib-neu.firebaseapp.com",
+  authDomain: "wissenlib-neu.web.app",
   projectId: "wissenlib-neu",
   storageBucket: "wissenlib-neu.firebasestorage.app",
   messagingSenderId: "116880882776",
