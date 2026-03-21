@@ -713,7 +713,7 @@ window.exportCSV=()=>{
   const {from,to}=getDateRange();
   a.href=url; a.download=`WissenLib_${from}_to_${to}.csv`;
   a.click(); URL.revokeObjectURL(url);
-  toast('ok','CSV Exported',`WissenLib_${from}_to_${to}.csv`);
+
 };
 
 window.exportPDF=()=>{
@@ -745,7 +745,7 @@ window.exportPDF=()=>{
   });
   const fname=`WissenLib_Report_${from}_to_${to}.pdf`;
   pdf.save(fname);
-  toast('ok','PDF Exported',fname);
+
 };
 
 window.doLogout=async()=>{
