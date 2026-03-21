@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
 <style>
+  /* Make layout containers transparent so slideshow shows through */
   .admin-layout { background: transparent !important; }
   .admin-main   { background: transparent !important; }
   body { overflow:hidden; background:var(--bg); }
@@ -22,6 +23,7 @@
   @keyframes fadeSlide{0%{opacity:0}6%{opacity:1}20%{opacity:1}26%{opacity:0}100%{opacity:0}}
   .slide-overlay{position:absolute;inset:0;background:var(--overlay);backdrop-filter:blur(3px);}
 
+  /* Lift all admin UI above slideshow */
   .admin-layout, #toasts, .modal-bg { position:relative; z-index:10; }
 
   /* Glass sidebar */
@@ -38,32 +40,18 @@
     -webkit-backdrop-filter: blur(12px) !important;
     border-bottom-color: var(--glass-b) !important;
   }
+  /* Slightly frosted content cards */
   .stat-card, .chart-wrap, .filter-bar, .table-wrap {
     background: var(--glass) !important;
     backdrop-filter: blur(8px) !important;
     -webkit-backdrop-filter: blur(8px) !important;
   }
   .admin-main { overflow-y:auto; height:100vh; }
-
-  /* ── Topbar title — white with shadow on glass ── */
-  .admin-topbar-title {
-    color:#F0F4FF !important;
-    text-shadow:0 1px 6px rgba(0,0,0,.35);
-  }
-  .admin-topbar-sub {
-    font-size:.775rem;
-    color:rgba(255,255,255,.65);
-    text-shadow:0 1px 4px rgba(0,0,0,.3);
-  }
-
-  /* ── Clock on glass topbar ─────────────────────── */
   .role-badge {
     display:inline-flex;align-items:center;gap:.375rem;
     padding:.25rem .75rem;border-radius:999px;
     font-size:.75rem;font-weight:700;
-    background:rgba(255,255,255,.18);color:#F0F4FF;
-    text-shadow:0 1px 4px rgba(0,0,0,.25);
-    border:1px solid rgba(255,255,255,.25);
+    background:var(--p-10);color:var(--p);
   }
   .modal-bg { display:none; }
   .modal-bg.open { display:flex; }
@@ -78,63 +66,84 @@
     display:flex;flex-direction:column;align-items:flex-end;
     line-height:1.2;
   }
-  .admin-clock-time {
-    font-size:.9rem;font-weight:700;
-    color:#F0F4FF;
-    font-variant-numeric:tabular-nums;
-    text-shadow:0 1px 6px rgba(0,0,0,.35);
-  }
-  .admin-clock-date {
-    font-size:.7rem;
-    color:rgba(255,255,255,.68);
-    text-shadow:0 1px 4px rgba(0,0,0,.3);
-  }
-
-  /* ── Sidebar text ────────────────────────────── */
-  .sidebar #adminName  { color:#F0F4FF !important; text-shadow:0 1px 4px rgba(0,0,0,.25); }
-  .sidebar #adminEmail { color:rgba(255,255,255,.6) !important; }
-  .sidebar .nav-item   { color:rgba(255,255,255,.65); }
-  .sidebar .nav-item:hover  { color:#F0F4FF; background:rgba(255,255,255,.1); }
-  .sidebar .nav-item.active { color:#F0F4FF; background:rgba(61,111,224,.3); }
-  .sidebar-logo .logo-sm    { color:#F0F4FF !important; text-shadow:0 1px 4px rgba(0,0,0,.25); }
-  .sidebar-logo .logo-sm span { color:var(--s) !important; }
+  .admin-clock-time { font-size:.9rem;font-weight:700;color:var(--p);font-variant-numeric:tabular-nums; }
+  .admin-clock-date { font-size:.7rem;color:var(--text2); }
 
   /* ── Dark mode readability fixes ─────────────────────── */
+  /* Sidebar text */
   [data-mode="dark"] .sidebar #adminName  { color:#E2EAF8 !important; }
   [data-mode="dark"] .sidebar #adminEmail { color:#8094B8 !important; }
   [data-mode="dark"] .nav-item            { color:#8094B8; }
   [data-mode="dark"] .nav-item:hover      { color:#E2EAF8; background:rgba(255,255,255,.08); }
   [data-mode="dark"] .nav-item.active     { color:#93C5FD; background:rgba(61,111,224,.25); }
-  [data-mode="dark"] .admin-topbar-title  { color:#E2EAF8 !important; text-shadow:none; }
-  [data-mode="dark"] .admin-topbar-sub    { color:#8094B8 !important; text-shadow:none; }
-  [data-mode="dark"] .admin-clock-time    { color:#7EB3FF !important; text-shadow:none; }
-  [data-mode="dark"] .admin-clock-date    { color:#8094B8 !important; text-shadow:none; }
-  [data-mode="dark"] .role-badge { background:rgba(61,111,224,.3); color:#93C5FD; border-color:rgba(147,197,253,.25); text-shadow:none; }
+
+  /* Topbar titles */
+  [data-mode="dark"] .admin-topbar-title  { color:#E2EAF8 !important; }
+  [data-mode="dark"] .admin-topbar .admin-clock-time { color:#7EB3FF !important; }
+  [data-mode="dark"] .admin-topbar .admin-clock-date { color:#8094B8 !important; }
+
+  /* Role badge — visible in both themes */
+  [data-mode="dark"] .role-badge { background:rgba(61,111,224,.3); color:#93C5FD; }
+
+  /* Stat cards */
   [data-mode="dark"] .stat-card .stat-label { color:#8094B8 !important; }
   [data-mode="dark"] .stat-card .stat-sub   { color:#8094B8 !important; }
   [data-mode="dark"] .stat-num              { color:#7EB3FF !important; }
   [data-mode="dark"] .stat-card.secondary .stat-num { color:#D8AE28 !important; }
 
-  /* Classic dark adjustments */
+  /* Classic dark — green/red palette adjustments */
   [data-mode="dark"][data-palette="classic"] .stat-num              { color:#4ADE80 !important; }
   [data-mode="dark"][data-palette="classic"] .stat-card.secondary .stat-num { color:#F87171 !important; }
   [data-mode="dark"][data-palette="classic"] .nav-item.active       { color:#4ADE80; background:rgba(37,176,102,.2); }
-  [data-mode="dark"][data-palette="classic"] .admin-clock-time      { color:#4ADE80 !important; }
+  [data-mode="dark"][data-palette="classic"] .admin-topbar .admin-clock-time { color:#4ADE80 !important; }
   [data-mode="dark"][data-palette="classic"] .role-badge            { background:rgba(37,176,102,.25); color:#4ADE80; }
 
-  /* Table text */
+  /* Table text visibility in dark */
   [data-mode="dark"] thead th  { color:#8094B8 !important; }
   [data-mode="dark"] tbody td  { color:#E2EAF8 !important; }
   [data-mode="dark"] .text-muted, [data-mode="dark"] .table-toolbar-title { color:#8094B8 !important; }
   [data-mode="dark"] .table-toolbar-title { color:#E2EAF8 !important; }
+
+  /* Chart titles and filter labels */
   [data-mode="dark"] .chart-title { color:#E2EAF8 !important; }
   [data-mode="dark"] .filter-bar label { color:#8094B8 !important; }
 
+  /* Sidebar logo */
+  [data-mode="dark"] .sidebar-logo .logo-sm { color:#E2EAF8 !important; }
+  [data-mode="dark"] .sidebar-logo .logo-sm span { color:var(--p) !important; }
   @media(max-width:768px){
     body { overflow:auto; }
     .admin-main { overflow-y:unset;height:auto; }
-    .sidebar { position:fixed;left:-240px;z-index:300;transition:left .25s; }
+    .sidebar { position:fixed;left:-240px;z-index:300;transition:left .25s;width:240px;height:100vh;flex-direction:column; }
     .sidebar.open { left:0;box-shadow:4px 0 20px var(--shadow); }
+    .sidebar-footer { display:flex !important; }
+    #btnToggleSidebar { display:flex !important; }
+  }
+  @media(max-width:600px){
+    .charts-row-2col { grid-template-columns:1fr !important; }
+    .admin-topbar { flex-direction:row; flex-wrap:wrap; }
+    .admin-clock-time { font-size:.8rem !important; }
+    .admin-clock-date { font-size:.65rem !important; }
+    .btn-export { font-size:.72rem; padding:.35rem .6rem; }
+  }
+  @media(max-width:480px){
+    .admin-content { padding:.75rem; }
+    .stat-grid { grid-template-columns:1fr 1fr; gap:.5rem; }
+    .stat-num { font-size:1.75rem; }
+    .stat-label { font-size:.68rem; }
+    .table-wrap { font-size:.75rem; }
+    thead th { font-size:.65rem; padding:.4rem .5rem; }
+    tbody td { padding:.4rem .5rem; }
+    .pagination { padding:.625rem .75rem; flex-wrap:wrap; gap:.375rem; }
+    .table-toolbar { padding:.625rem .75rem; }
+    .filter-bar { padding:.75rem; }
+    .chart-wrap { padding:1rem; }
+  }
+  @media(max-width:360px){
+    .stat-grid { grid-template-columns:1fr 1fr; gap:.375rem; }
+    .stat-num { font-size:1.5rem; }
+    .stat-card { padding:.875rem .75rem; }
+    .admin-topbar-title { font-size:.9rem !important; }
   }
 </style>
 </head>
@@ -165,6 +174,12 @@
   </div>
 </div>
 
+<!-- Sidebar backdrop (mobile) -->
+<div id="sidebarBackdrop" onclick="toggleSidebar()" style="
+  display:none;position:fixed;inset:0;z-index:299;
+  background:rgba(0,0,0,.45);backdrop-filter:blur(2px);
+"></div>
+
 <div class="admin-layout">
 
   <!-- Sidebar -->
@@ -179,10 +194,11 @@
       <button class="nav-item" onclick="setView('log')" id="navLog">Visitor Log</button>
     </nav>
 
+    <!-- Profile + Sign Out at bottom -->
     <div class="sidebar-footer">
       <div style="padding:.5rem .25rem;margin-bottom:.75rem;">
-        <div id="adminName" style="font-size:.8rem;font-weight:700;margin-bottom:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-        <div id="adminEmail" style="font-size:.72rem;word-break:break-all;line-height:1.35;"></div>
+        <div id="adminName" style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        <div id="adminEmail" style="font-size:.72rem;color:var(--muted);word-break:break-all;line-height:1.35;"></div>
       </div>
       <button class="nav-item" onclick="doLogout()" style="color:var(--err);width:100%;">
         Sign Out
@@ -196,10 +212,10 @@
     <!-- Topbar -->
     <div class="admin-topbar">
       <div style="display:flex;align-items:center;gap:.875rem;">
-        <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()" style="display:none;" id="btnToggleSidebar">☰</button>
+        <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()" id="btnToggleSidebar" style="display:none;">☰</button>
         <div>
           <div class="admin-topbar-title" id="viewTitle">Dashboard Overview</div>
-          <div class="admin-topbar-sub">NEU Library Visitor Analytics</div>
+          <div style="font-size:.775rem;color:var(--muted);">NEU Library Visitor Analytics</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
@@ -268,7 +284,7 @@
       </div>
 
       <!-- Extra charts row -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
+      <div class="charts-row-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
         <div class="chart-wrap" style="margin-bottom:0;">
           <div class="chart-title">Reasons for Visit</div>
           <canvas id="reasonChart" style="max-height:200px;"></canvas>
@@ -429,8 +445,10 @@ function loadData() {
     orderBy('date','desc')
   );
 
+  // Real-time listener — updates automatically when new check-ins happen
   unsubVisits = onSnapshot(q, snap => {
     allVisits = snap.docs.map(d=>({id:d.id,...d.data()}));
+    // Sort most recent first
     allVisits.sort((a,b)=>(b.checkInTimeISO||'').localeCompare(a.checkInTimeISO||''));
     applyFilters();
     buildChart(from,to);
@@ -489,6 +507,7 @@ function buildExtraCharts() {
   const cs = getComputedStyle(document.documentElement);
   const colors = ['#1A4894','#C8960C','#16A34A','#DC2626','#2563EB','#9333EA'];
 
+  // Reason pie chart
   const reasonMap = {};
   allVisits.forEach(v => {
     if (!v.reasonForVisit) return;
@@ -509,6 +528,7 @@ function buildExtraCharts() {
     }
   });
 
+  // Dept bar chart
   const deptMap = {};
   allVisits.forEach(v => { if (v.department) deptMap[v.department] = (deptMap[v.department] || 0) + 1; });
   const dLabels = Object.keys(deptMap).sort((a,b) => deptMap[b] - deptMap[a]);
@@ -658,7 +678,20 @@ window.setView=(v)=>{
     main.scrollTo({top:0,behavior:'smooth'});
   }
 };
-window.toggleSidebar=()=>document.getElementById('sidebar').classList.toggle('open');
+window.toggleSidebar=()=>{
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  sb.classList.toggle('open');
+  bd.style.display = sb.classList.contains('open') ? 'block' : 'none';
+};
+
+// Show hamburger on mobile
+function checkMobile() {
+  const btn = document.getElementById('btnToggleSidebar');
+  if (window.innerWidth <= 768) btn.style.display = 'flex';
+  else { btn.style.display = 'none'; document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarBackdrop').style.display='none'; }
+}
+checkMobile(); window.addEventListener('resize', checkMobile);
 
 window.exportCSV=()=>{
   const headers=['#','Name','Email','Student ID','Department','Program','Reason','Check-In','Type'];

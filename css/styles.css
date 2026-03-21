@@ -546,14 +546,13 @@ tbody tr:hover td { background: var(--surface2); }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 
-/* Tablet + Mobile — Admin */
+/* ── Tablet (768px) — Admin ──────────────────────────────── */
 @media (max-width: 768px) {
-  /* Admin layout stacks vertically */
   .admin-layout { flex-direction: column; }
   .sidebar {
     width: 100%; height: auto; position: static;
     flex-direction: row; flex-wrap: wrap;
-    padding: .75rem 1rem; gap: .5rem;
+    padding: .625rem 1rem; gap: .5rem;
     align-items: center;
   }
   .sidebar-logo { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
@@ -565,50 +564,63 @@ tbody tr:hover td { background: var(--surface2); }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .field-row, .field-row-3 { grid-template-columns: 1fr; }
   .admin-content { padding: 1rem; }
-  .admin-topbar { padding: .75rem 1rem; }
+  .admin-topbar {
+    padding: .625rem 1rem;
+    flex-wrap: wrap; gap: .5rem;
+  }
   .filter-bar { flex-direction: column; align-items: stretch; gap: .5rem; }
   .filter-field { min-width: unset; }
   table { font-size: .775rem; }
   thead th, tbody td { padding: .5rem .6rem; }
+  /* Stack the extra charts row */
+  .charts-row-2col { grid-template-columns: 1fr !important; }
 }
 
-/* Mobile — Auth / Login page */
+/* ── Mobile (600px) ──────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* Admin topbar — clock on its own line */
+  .admin-topbar { flex-direction: column; align-items: flex-start; gap: .5rem; }
+  .admin-topbar > div:last-child { width: 100%; justify-content: space-between; }
+  .admin-clock { align-items: flex-start; }
+
+  /* Stat grid 2 col */
+  .stat-grid { grid-template-columns: 1fr 1fr; gap: .625rem; }
+
+  /* Table — allow horizontal scroll, hide less critical columns */
+  .table-wrap { overflow-x: auto; }
+  table { min-width: 540px; }
+}
+
+/* ── Mobile (480px) — Login / Auth ──────────────────────── */
 @media (max-width: 480px) {
   .auth-card { padding: 1.25rem; border-radius: 1rem; }
-  .auth-page { padding: 1rem .75rem; align-items: flex-start; padding-top: 3.5rem; }
-  .logo-block { margin-bottom: 1.25rem; }
+  .auth-page {
+    padding: .75rem;
+    align-items: flex-start;
+    padding-top: 2.5rem;
+    min-height: 100dvh;
+  }
+  .logo-block { margin-bottom: 1rem; }
   .tabs { margin-bottom: 1rem; }
   .field-row, .field-row-3 { grid-template-columns: 1fr; }
-  .method-tabs { flex-direction: column; gap: .35rem; }
-  .method-tab { padding: .5rem; font-size: .78rem; }
   .btn-google { font-size: .8rem; padding: .625rem; }
   .theme-bar { top: .5rem; right: .5rem; padding: .2rem .35rem; }
-  .theme-pill { padding: .2rem .4rem; font-size: .68rem; }
+  .theme-pill { padding: .2rem .4rem; font-size: .65rem; }
+  /* Toast width on mobile */
+  .toast { min-width: unset; max-width: calc(100vw - 2rem); }
 }
 
-/* Mobile — Check-in page */
-@media (max-width: 480px) {
-  .checkin-topbar { padding: .625rem 1rem; }
-  .checkin-body { padding: .75rem .5rem; align-items: flex-start; }
-  .checkin-card { padding: 1rem; border-radius: .875rem; }
-  .welcome-banner { padding: 1rem; margin-bottom: 1.25rem; }
-  .welcome-banner .name { font-size: 1.15rem; }
-  .welcome-banner .prog { font-size: .8rem; }
-  .reason-grid { grid-template-columns: repeat(2, 1fr); gap: .5rem; }
-  .reason-tile { padding: .75rem .35rem; font-size: .72rem; }
-  .reason-tile .icon { font-size: 1.25rem; }
-  .section-head { font-size: .72rem; }
-  #btnCheckin { font-size: .875rem; padding: .75rem !important; }
-}
-
-/* Small phones (iPhone SE, Galaxy A series) */
+/* ── Mobile (360px) — Small phones ──────────────────────── */
 @media (max-width: 360px) {
-  .auth-card { padding: 1rem; }
+  .auth-card { padding: .875rem; }
+  .auth-page { padding: .5rem; padding-top: 2rem; }
   .reason-grid { grid-template-columns: repeat(2, 1fr); gap: .375rem; }
   .stat-grid { grid-template-columns: 1fr 1fr; }
-  .checkin-card { padding: .875rem; }
-  .welcome-banner .name { font-size: 1rem; }
-  .logo-text .app-name { font-size: 1.15rem; }
+  .logo-text .app-name { font-size: 1.1rem; }
+  .admin-content { padding: .75rem; }
+  .admin-topbar { padding: .5rem .75rem; }
+  .btn { font-size: .8rem; padding: .6rem 1rem; }
+  .btn-sm { font-size: .73rem; padding: .35rem .625rem; }
 }
 
 /* ── SCROLLBAR ───────────────────────────────────────────── */

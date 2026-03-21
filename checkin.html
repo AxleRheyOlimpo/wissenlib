@@ -6,7 +6,7 @@
 <title>WissenLib — Check In</title>
 <link rel="stylesheet" href="css/styles.css"/>
 <style>
-  body { background:var(--bg); min-height:100vh; display:flex; flex-direction:column; position:relative; }
+  body { background:var(--bg); min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; position:relative; }
 
   /* ── Slideshow ───────────────────────────────── */
   .slideshow { position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
@@ -30,18 +30,17 @@
   }
   .ci-brand { display:flex; align-items:center; gap:.625rem; }
   .ci-brand img { width:32px;height:32px;object-fit:contain;border-radius:.4rem; }
-  .ci-brand-name { font-size:.9375rem;font-weight:800;letter-spacing:-.02em;color:#F0F4FF;text-shadow:0 1px 6px rgba(0,0,0,.3); }
-  .ci-brand-sub  { font-size:.68rem;color:rgba(255,255,255,.65);text-shadow:0 1px 4px rgba(0,0,0,.3); }
+  .ci-brand-name { font-size:.9375rem;font-weight:800;letter-spacing:-.02em; }
+  .ci-brand-sub  { font-size:.68rem;color:var(--muted); }
   .ci-clock {
     flex:1; text-align:center;
     display:flex; flex-direction:column; align-items:center; gap:.05rem;
   }
   .ci-clock-time {
-    font-size:1.2rem;font-weight:800;color:#F0F4FF;
+    font-size:1.2rem;font-weight:800;color:var(--p);
     font-variant-numeric:tabular-nums;letter-spacing:.01em;line-height:1;
-    text-shadow:0 1px 8px rgba(0,0,0,.35);
   }
-  .ci-clock-date { font-size:.7rem;color:rgba(255,255,255,.72);font-weight:500;text-shadow:0 1px 4px rgba(0,0,0,.3); }
+  .ci-clock-date { font-size:.7rem;color:var(--text2);font-weight:500; }
   .ci-signout {
     flex-shrink:0;
     padding:.4rem .8rem; border-radius:var(--radius-sm);
@@ -72,19 +71,6 @@
     background:var(--glass) !important;
     backdrop-filter:blur(12px);
     -webkit-backdrop-filter:blur(12px);
-  }
-
-  /* ── NEU Library page title ──────────────────── */
-  .ci-neu-header {
-    font-size:1.5rem;
-    font-weight:800;
-    color:#F0F4FF;
-    letter-spacing:-.025em;
-    text-align:center;
-    margin-bottom:.875rem;
-    padding-bottom:.75rem;
-    border-bottom:2px solid rgba(255,255,255,.18);
-    text-shadow:0 1px 8px rgba(0,0,0,.35);
   }
 
   /* ── Welcome banner ──────────────────────────── */
@@ -147,18 +133,32 @@
 
   /* ── Mobile ──────────────────────────────────── */
   @media(max-width:600px) {
-    .ci-header { padding:.625rem 1rem; }
-    .ci-body { padding:1rem .75rem; align-items:flex-start; }
-    .ci-card { padding:1.25rem; border-radius:.875rem; }
-    .ci-banner { padding:.875rem 1rem; }
-    .ci-banner-name { font-size:1rem; }
+    html, body { overflow:auto; height:auto; }
+    .ci-header { padding:.5rem 1rem; }
+    .ci-clock-time { font-size:1rem; }
+    .ci-clock-date { font-size:.65rem; }
+    .ci-body { padding:.875rem .75rem; align-items:flex-start; }
+    .ci-card { padding:1.25rem 1rem; border-radius:.875rem; }
+    .ci-banner { padding:.875rem; gap:.75rem; }
+    .ci-banner-name { font-size:.95rem; }
+    .ci-banner-avatar { width:38px; height:38px; font-size:.9rem; }
+    .ci-neu-header { font-size:1.2rem; margin-bottom:.625rem; padding-bottom:.5rem; }
     .reason-grid { grid-template-columns:repeat(2,1fr); gap:.5rem; }
-    .reason-tile { padding:.75rem .35rem; font-size:.72rem; }
-    .reason-tile .icon { font-size:1.25rem; }
+    .reason-tile { padding:.75rem .375rem; font-size:.72rem; }
+    .reason-tile .icon { font-size:1.2rem; }
+    #btnCheckin { font-size:.875rem; padding:.75rem !important; }
   }
   @media(max-width:360px) {
-    .ci-clock-time { font-size:.95rem; }
-    .ci-card { padding:1rem; }
+    .ci-header { padding:.4rem .75rem; }
+    .ci-clock-time { font-size:.875rem; }
+    .ci-brand-name { font-size:.85rem; }
+    .ci-card { padding:1rem .875rem; }
+    .ci-banner { padding:.75rem; }
+    .ci-banner-name { font-size:.875rem; }
+    .ci-neu-header { font-size:1.05rem; }
+    .reason-grid { gap:.375rem; }
+    .reason-tile { padding:.625rem .25rem; font-size:.68rem; }
+    .reason-tile .icon { font-size:1.1rem; }
   }
 </style>
 </head>
@@ -195,13 +195,11 @@
 <div class="ci-body">
   <div class="ci-card" id="checkinCard">
 
-    <!-- Page title -->
-    <div class="ci-neu-header">Welcome to NEU Library!</div>
-
-    <!-- Welcome banner (profile) -->
+    <!-- Welcome banner -->
     <div class="ci-banner" id="welcomeBanner">
       <div class="ci-banner-avatar" id="bannerAvatar">…</div>
       <div style="flex:1;min-width:0;">
+        <div class="ci-banner-greeting">Welcome back,</div>
         <div class="ci-banner-name" id="visitorName">Loading…</div>
         <div class="ci-banner-meta">
           <span class="ci-banner-tag" id="visitorId" style="display:none;"></span>
@@ -279,7 +277,7 @@
   <div class="success-icon">🎉</div>
   <div class="success-name" id="successName"></div>
   <div class="success-detail" id="successDetail"></div>
-  <div class="success-welcome">Welcome to NEU Library!</div>
+  <div class="success-welcome">Welcome to the NEU Library! Enjoy your visit.</div>
   <div class="success-countdown">
     Logging out in <span id="countdownNum" style="font-weight:700;color:var(--err);">3</span>s
     <div class="countdown-bar-wrap">
