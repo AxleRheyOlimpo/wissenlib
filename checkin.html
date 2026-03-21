@@ -6,89 +6,85 @@
 <title>WissenLib — Check In</title>
 <link rel="stylesheet" href="css/styles.css"/>
 <style>
-  /* ── Kiosk layout ─────────────────────────────── */
-  html, body { height:100%; overflow:hidden; }
-  .kiosk-page {
-    height:100vh; display:flex; flex-direction:column;
-    background:var(--bg); overflow:hidden;
-  }
+  body { background:var(--bg); min-height:100vh; display:flex; flex-direction:column; }
 
-  /* ── Topbar ───────────────────────────────────── */
-  .kiosk-topbar {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:.625rem 1.5rem; background:var(--surface);
-    border-bottom:1px solid var(--border);
+  /* ── Header ─────────────────────────────────── */
+  .ci-header {
+    background:var(--surface); border-bottom:1px solid var(--border);
     box-shadow:0 1px 4px var(--shadow);
-    flex-shrink:0; gap:1rem;
+    padding:.625rem 2rem;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:1rem; flex-shrink:0;
   }
-  .kiosk-brand { display:flex; align-items:center; gap:.625rem; flex-shrink:0; }
-  .kiosk-brand img { width:32px;height:32px;object-fit:contain;border-radius:.4rem; }
-  .kiosk-brand-name { font-size:.9375rem;font-weight:800;letter-spacing:-.02em; }
-  .kiosk-brand-sub  { font-size:.68rem;color:var(--muted); }
-  .kiosk-clock {
-    text-align:center; flex:1;
-    display:flex; flex-direction:column; align-items:center; gap:.1rem;
+  .ci-brand { display:flex; align-items:center; gap:.625rem; }
+  .ci-brand img { width:32px;height:32px;object-fit:contain;border-radius:.4rem; }
+  .ci-brand-name { font-size:.9375rem;font-weight:800;letter-spacing:-.02em; }
+  .ci-brand-sub  { font-size:.68rem;color:var(--muted); }
+  .ci-clock {
+    flex:1; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:.05rem;
   }
-  .kiosk-clock-time {
-    font-size:1.15rem;font-weight:800;color:var(--p);
+  .ci-clock-time {
+    font-size:1.2rem;font-weight:800;color:var(--p);
     font-variant-numeric:tabular-nums;letter-spacing:.01em;line-height:1;
   }
-  .kiosk-clock-date { font-size:.72rem;color:var(--text2);font-weight:500; }
-  .kiosk-signout {
+  .ci-clock-date { font-size:.7rem;color:var(--text2);font-weight:500; }
+  .ci-signout {
     flex-shrink:0;
-    padding:.45rem .875rem; border-radius:var(--radius-sm);
+    padding:.4rem .8rem; border-radius:var(--radius-sm);
     background:none; border:1.5px solid var(--err);
-    color:var(--err); font-size:.8rem; font-weight:600;
+    color:var(--err); font-size:.78rem; font-weight:600;
     cursor:pointer; transition:all .18s;
   }
-  .kiosk-signout:hover { background:var(--err); color:#fff; }
+  .ci-signout:hover { background:var(--err); color:#fff; }
 
-  /* ── Body: split ──────────────────────────────── */
-  .kiosk-body {
-    flex:1; display:flex; overflow:hidden;
+  /* ── Body ────────────────────────────────────── */
+  .ci-body {
+    flex:1; display:flex; align-items:center; justify-content:center;
+    padding:1.5rem 2rem;
   }
 
-  /* Left: profile */
-  .kiosk-left {
-    width:280px; flex-shrink:0;
-    background:var(--surface); border-right:1px solid var(--border);
-    padding:1.5rem 1.25rem;
-    display:flex; flex-direction:column; justify-content:center;
-    overflow-y:auto;
+  /* ── Card ────────────────────────────────────── */
+  .ci-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:1.25rem; padding:1.75rem 2rem;
+    width:100%; max-width:600px;
+    box-shadow:0 6px 28px var(--shadow);
   }
-  .profile-greeting { font-size:.78rem;opacity:.75;font-weight:500;color:var(--text2);margin-bottom:.25rem; }
-  .profile-name { font-size:1.25rem;font-weight:800;letter-spacing:-.02em;color:var(--text);line-height:1.2;margin-bottom:.5rem; }
-  .profile-id {
-    display:inline-flex; align-items:center; gap:.35rem;
-    font-size:.78rem;font-family:monospace;font-weight:600;
-    color:var(--p); background:var(--p-10);
-    border-radius:999px; padding:.2rem .6rem; margin-bottom:.5rem;
-  }
-  .profile-prog { font-size:.8rem;color:var(--muted);font-weight:500; }
-  .profile-divider { height:1px;background:var(--border);margin:1rem 0; }
 
-  /* Right: reasons */
-  .kiosk-right {
-    flex:1; display:flex; flex-direction:column;
-    padding:1.25rem 1.5rem; overflow-y:auto;
+  /* ── Welcome banner ──────────────────────────── */
+  .ci-banner {
+    background:linear-gradient(135deg, var(--p) 0%, color-mix(in srgb, var(--p) 75%, var(--s)) 100%);
+    border-radius:var(--radius); padding:1.125rem 1.25rem;
+    color:#fff; margin-bottom:1.25rem;
+    display:flex; align-items:center; gap:1rem;
   }
+  .ci-banner-avatar {
+    width:44px; height:44px; border-radius:50%; flex-shrink:0;
+    background:rgba(255,255,255,.25);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem; font-weight:800; letter-spacing:-.02em;
+  }
+  .ci-banner-greeting { font-size:.72rem; opacity:.8; font-weight:500; }
+  .ci-banner-name { font-size:1.1rem; font-weight:800; letter-spacing:-.02em; line-height:1.2; margin-top:.1rem; }
+  .ci-banner-meta { margin-top:.35rem; display:flex; gap:.5rem; flex-wrap:wrap; }
+  .ci-banner-tag {
+    font-size:.7rem; font-weight:600;
+    background:rgba(255,255,255,.2); border-radius:999px;
+    padding:.15rem .55rem;
+  }
+
+  /* ── Reasons ─────────────────────────────────── */
   .reason-section-head {
-    font-size:.75rem;font-weight:700;color:var(--s);
+    font-size:.72rem;font-weight:700;color:var(--s);
     text-transform:uppercase;letter-spacing:.07em;
-    border-bottom:2px solid var(--s);padding-bottom:.35rem;
+    border-bottom:2px solid var(--s);padding-bottom:.3rem;
     margin-bottom:.875rem;
   }
   .others-box { display:none; margin-top:.625rem; }
   .others-box.show { display:block; }
 
-  /* ── Confirm button bar ───────────────────────── */
-  .kiosk-confirm-bar {
-    flex-shrink:0; padding:.875rem 1.5rem;
-    background:var(--surface); border-top:1px solid var(--border);
-    display:flex; gap:.75rem; align-items:center;
-  }
-
-  /* ── Success overlay ──────────────────────────── */
+  /* ── Success overlay ─────────────────────────── */
   .success-overlay {
     display:none; position:fixed; inset:0; z-index:200;
     background:var(--surface); flex-direction:column;
@@ -97,122 +93,118 @@
   }
   .success-overlay.show { display:flex; animation:fadeIn .35s ease; }
   @keyframes fadeIn { from{opacity:0;transform:scale(.97)} to{opacity:1;transform:none} }
-  .success-icon { font-size:5rem; margin-bottom:1rem; }
-  .success-name { font-size:1.75rem;font-weight:800;letter-spacing:-.025em;color:var(--text); }
-  .success-detail { font-size:.9rem;color:var(--text2);margin-top:.35rem;max-width:400px; }
+  .success-icon  { font-size:5rem; margin-bottom:1rem; }
+  .success-name  { font-size:1.75rem;font-weight:800;letter-spacing:-.025em;color:var(--text); }
+  .success-detail{ font-size:.9rem;color:var(--text2);margin-top:.35rem;max-width:400px; }
   .success-welcome {
-    margin-top:1.25rem; padding:.875rem 1.5rem;
-    background:var(--p-10); border-radius:var(--radius);
+    margin-top:1.25rem;padding:.875rem 1.5rem;
+    background:var(--p-10);border-radius:var(--radius);
     font-size:.875rem;color:var(--p);font-weight:600;
   }
-  .success-countdown {
-    margin-top:1.25rem; font-size:.82rem; color:var(--muted);
-  }
+  .success-countdown { margin-top:1.25rem;font-size:.82rem;color:var(--muted); }
   .countdown-bar-wrap {
-    width:220px; height:4px; background:var(--border);
-    border-radius:2px; overflow:hidden; margin:.4rem auto 0;
+    width:200px;height:4px;background:var(--border);
+    border-radius:2px;overflow:hidden;margin:.4rem auto 0;
   }
-  .countdown-bar { height:100%;background:var(--err);width:100%;transition:width 1s linear; }
+  .countdown-bar { height:100%;background:var(--err);width:100%; }
 
-  /* ── Mobile ───────────────────────────────────── */
-  @media(max-width:640px) {
-    html, body { overflow:auto; height:auto; }
-    .kiosk-page { height:auto; overflow:visible; }
-    .kiosk-body { flex-direction:column; overflow:visible; }
-    .kiosk-left { width:100%; border-right:none; border-bottom:1px solid var(--border); padding:1rem 1.25rem; justify-content:flex-start; }
-    .kiosk-right { padding:1rem 1.25rem; overflow:visible; }
-    .kiosk-clock-time { font-size:.95rem; }
-    .kiosk-clock-date { font-size:.65rem; }
+  /* ── Mobile ──────────────────────────────────── */
+  @media(max-width:600px) {
+    .ci-header { padding:.625rem 1rem; }
+    .ci-body { padding:1rem .75rem; align-items:flex-start; }
+    .ci-card { padding:1.25rem; border-radius:.875rem; }
+    .ci-banner { padding:.875rem 1rem; }
+    .ci-banner-name { font-size:1rem; }
     .reason-grid { grid-template-columns:repeat(2,1fr); gap:.5rem; }
     .reason-tile { padding:.75rem .35rem; font-size:.72rem; }
     .reason-tile .icon { font-size:1.25rem; }
-    .kiosk-confirm-bar { padding:.75rem 1.25rem; }
   }
   @media(max-width:360px) {
-    .kiosk-brand-name { font-size:.85rem; }
-    .profile-name { font-size:1rem; }
+    .ci-clock-time { font-size:.95rem; }
+    .ci-card { padding:1rem; }
   }
 </style>
 </head>
 <body>
 
-<div class="kiosk-page" id="kioskPage">
-
-  <!-- ── Topbar ─────────────────────────────────── -->
-  <div class="kiosk-topbar">
-    <div class="kiosk-brand">
-      <img src="images/logo.png" alt="Logo" onerror="this.style.display='none'"/>
-      <div>
-        <div class="kiosk-brand-name">WissenLib</div>
-        <div class="kiosk-brand-sub">NEU Library</div>
-      </div>
-    </div>
-    <div class="kiosk-clock">
-      <div class="kiosk-clock-time" id="clockTime"></div>
-      <div class="kiosk-clock-date" id="clockDate"></div>
-    </div>
-    <button class="kiosk-signout" onclick="doLogout()">Sign Out</button>
-  </div>
-
-  <!-- ── Body ───────────────────────────────────── -->
-  <div class="kiosk-body">
-
-    <!-- Left: Profile -->
-    <div class="kiosk-left" id="profilePanel">
-      <div class="profile-greeting">Welcome back,</div>
-      <div class="profile-name" id="visitorName">Loading…</div>
-      <div class="profile-id" id="visitorId" style="display:none;"></div>
-      <div class="profile-prog" id="visitorProg"></div>
-      <div class="profile-divider"></div>
-      <div style="font-size:.75rem;color:var(--muted);">Select your reason(s) for visiting and tap Confirm.</div>
-    </div>
-
-    <!-- Right: Reasons -->
-    <div class="kiosk-right">
-      <div class="reason-section-head">Reason for Visit <span style="font-size:.65rem;font-weight:400;color:var(--muted);">(select all that apply)</span></div>
-
-      <div class="reason-grid" id="reasonGrid">
-        <div class="reason-tile" onclick="selectReason(this,'Study')" data-reason="Study">
-          <span class="icon">📖</span>Study
-        </div>
-        <div class="reason-tile" onclick="selectReason(this,'Research')" data-reason="Research">
-          <span class="icon">🔬</span>Research
-        </div>
-        <div class="reason-tile" onclick="selectReason(this,'Borrow / Return')" data-reason="Borrow / Return">
-          <span class="icon">📦</span>Borrow / Return
-        </div>
-        <div class="reason-tile" onclick="selectReason(this,'Student Lounge')" data-reason="Student Lounge">
-          <span class="icon">🛋️</span>Student Lounge
-        </div>
-        <div class="reason-tile" onclick="selectReason(this,'Internet Access')" data-reason="Internet Access">
-          <span class="icon">💻</span>Internet Access
-        </div>
-        <div class="reason-tile" onclick="selectReason(this,'Others')" data-reason="Others">
-          <span class="icon">✏️</span>Others
-        </div>
-      </div>
-
-      <div class="others-box" id="othersBox">
-        <label for="othersText" style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:.35rem;">Describe your reason</label>
-        <textarea class="inp" id="othersText" rows="2"
-          placeholder="e.g. Thesis defense, meeting with professor…"
-          style="resize:none;"></textarea>
-      </div>
-
-      <div id="checkinErr" style="font-size:.8rem;color:var(--err);background:var(--surface2);border-radius:var(--radius-sm);padding:.5rem .75rem;margin-top:.625rem;display:none;"></div>
+<!-- ── Header ──────────────────────────────────────── -->
+<div class="ci-header">
+  <div class="ci-brand">
+    <img src="images/logo.png" alt="Logo" onerror="this.style.display='none'"/>
+    <div>
+      <div class="ci-brand-name">WissenLib</div>
+      <div class="ci-brand-sub">NEU Library</div>
     </div>
   </div>
+  <div class="ci-clock">
+    <div class="ci-clock-time" id="clockTime"></div>
+    <div class="ci-clock-date" id="clockDate"></div>
+  </div>
+  <button class="ci-signout" onclick="doLogout()">Sign Out</button>
+</div>
 
-  <!-- ── Confirm bar ────────────────────────────── -->
-  <div class="kiosk-confirm-bar">
-    <button class="btn btn-primary btn-full" id="btnCheckin" onclick="doCheckin()" style="padding:.875rem;font-size:.9375rem;flex:1;">
+<!-- ── Body ────────────────────────────────────────── -->
+<div class="ci-body">
+  <div class="ci-card" id="checkinCard">
+
+    <!-- Welcome banner -->
+    <div class="ci-banner" id="welcomeBanner">
+      <div class="ci-banner-avatar" id="bannerAvatar">…</div>
+      <div style="flex:1;min-width:0;">
+        <div class="ci-banner-greeting">Welcome back,</div>
+        <div class="ci-banner-name" id="visitorName">Loading…</div>
+        <div class="ci-banner-meta">
+          <span class="ci-banner-tag" id="visitorId" style="display:none;"></span>
+          <span class="ci-banner-tag" id="visitorProg"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reasons -->
+    <div class="reason-section-head">
+      Reason for Visit
+      <span style="font-size:.62rem;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;"> — select all that apply</span>
+    </div>
+
+    <div class="reason-grid" id="reasonGrid">
+      <div class="reason-tile" onclick="selectReason(this,'Study')" data-reason="Study">
+        <span class="icon">📖</span>Study
+      </div>
+      <div class="reason-tile" onclick="selectReason(this,'Research')" data-reason="Research">
+        <span class="icon">🔬</span>Research
+      </div>
+      <div class="reason-tile" onclick="selectReason(this,'Borrow / Return')" data-reason="Borrow / Return">
+        <span class="icon">📦</span>Borrow / Return
+      </div>
+      <div class="reason-tile" onclick="selectReason(this,'Student Lounge')" data-reason="Student Lounge">
+        <span class="icon">🛋️</span>Student Lounge
+      </div>
+      <div class="reason-tile" onclick="selectReason(this,'Internet Access')" data-reason="Internet Access">
+        <span class="icon">💻</span>Internet Access
+      </div>
+      <div class="reason-tile" onclick="selectReason(this,'Others')" data-reason="Others">
+        <span class="icon">✏️</span>Others
+      </div>
+    </div>
+
+    <div class="others-box" id="othersBox">
+      <label for="othersText" style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:.35rem;">Describe your reason</label>
+      <textarea class="inp" id="othersText" rows="2"
+        placeholder="e.g. Thesis defense, meeting with professor…"
+        style="resize:none;"></textarea>
+    </div>
+
+    <div id="checkinErr" style="font-size:.8rem;color:var(--err);background:var(--surface2);border-radius:var(--radius-sm);padding:.5rem .75rem;margin-top:.625rem;display:none;"></div>
+
+    <button class="btn btn-primary btn-full mt-2" id="btnCheckin"
+      onclick="doCheckin()" style="padding:.875rem;font-size:.9375rem;margin-top:1rem;">
       Confirm Check-In
     </button>
+
   </div>
+</div>
 
-</div><!-- /kiosk-page -->
-
-<!-- ── Success overlay ────────────────────────── -->
+<!-- ── Success overlay ──────────────────────────────── -->
 <div class="success-overlay" id="successOverlay">
   <div class="success-icon">🎉</div>
   <div class="success-name" id="successName"></div>
@@ -231,7 +223,7 @@
 <script type="module">
 import { initTheme, buildThemeBar } from './js/theme.js';
 import { auth, db } from './js/firebase-config.js';
-import { getUserRole, getUserData, logout, onAuthChange } from './js/auth.js';
+import { getUserRole, getUserData, logout } from './js/auth.js';
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -248,9 +240,7 @@ function tick() {
 }
 tick(); setInterval(tick, 1000);
 
-// Auth
-let currentUser = null;
-let profileData = null;
+let currentUser = null, profileData = null;
 const isAdminVisitor = new URLSearchParams(window.location.search).get('mode') === 'visitor';
 
 document.getElementById('btnCheckin').disabled = true;
@@ -272,37 +262,41 @@ onAuthStateChanged(auth, async user => {
 
 function renderProfile() {
   if (!profileData) return;
+
+  // Full Google display name takes priority
   const name = profileData.displayName ||
-    `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim() ||
+    `${profileData.firstName || ''} ${profileData.middleInitial ? profileData.middleInitial + '. ' : ''}${profileData.lastName || ''}`.trim() ||
     currentUser.email;
-  document.getElementById('visitorName').textContent = name;
+
+  // Avatar initials from full name
+  const words = name.split(' ').filter(Boolean);
+  const initials = words.length >= 2
+    ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+    : (words[0]?.[0] || '?').toUpperCase();
+
+  document.getElementById('visitorName').textContent  = name;
+  document.getElementById('bannerAvatar').textContent = initials;
 
   if (profileData.studentId) {
     const idEl = document.getElementById('visitorId');
-    idEl.textContent = profileData.studentId;
-    idEl.style.display = 'inline-flex';
+    idEl.textContent = 'ID: ' + profileData.studentId;
+    idEl.style.display = 'inline';
   }
-  document.getElementById('visitorProg').textContent =
-    [profileData.program, profileData.department].filter(Boolean).join(' · ');
+
+  const prog = [profileData.program, profileData.department].filter(Boolean).join(' · ');
+  if (prog) document.getElementById('visitorProg').textContent = prog;
 }
 
-// Multi-select reasons
+// Multi-select
 let selectedReasons = new Set();
 
 window.selectReason = (el, reason) => {
   el.classList.toggle('active');
-  if (el.classList.contains('active')) {
-    selectedReasons.add(reason);
-  } else {
-    selectedReasons.delete(reason);
-  }
-  const othersBox = document.getElementById('othersBox');
-  if (selectedReasons.has('Others')) {
-    othersBox.classList.add('show');
-  } else {
-    othersBox.classList.remove('show');
-    document.getElementById('othersText').value = '';
-  }
+  if (el.classList.contains('active')) selectedReasons.add(reason);
+  else selectedReasons.delete(reason);
+
+  document.getElementById('othersBox').classList.toggle('show', selectedReasons.has('Others'));
+  if (!selectedReasons.has('Others')) document.getElementById('othersText').value = '';
   document.getElementById('checkinErr').style.display = 'none';
 };
 
@@ -369,19 +363,19 @@ window.doCheckin = async () => {
   }
 };
 
-// Success + auto-logout
 function showSuccess(name, reason) {
-  document.getElementById('successName').textContent  = name;
+  document.getElementById('successName').textContent   = name;
   document.getElementById('successDetail').textContent = reason;
   document.getElementById('successOverlay').classList.add('show');
 
   let secs = 3;
   document.getElementById('countdownNum').textContent = secs;
-  document.getElementById('countdownBar').style.width = '100%';
-  document.getElementById('countdownBar').style.transition = 'none';
+  const bar = document.getElementById('countdownBar');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
   setTimeout(() => {
-    document.getElementById('countdownBar').style.transition = `width ${secs}s linear`;
-    document.getElementById('countdownBar').style.width = '0%';
+    bar.style.transition = `width ${secs}s linear`;
+    bar.style.width = '0%';
   }, 50);
 
   const timer = setInterval(async () => {
