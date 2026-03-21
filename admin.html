@@ -12,7 +12,7 @@
   /* Make layout containers transparent so slideshow shows through */
   .admin-layout { background: transparent !important; }
   .admin-main   { background: transparent !important; }
-  body { overflow:hidden; background:var(--bg); scrollbar-gutter:stable; }
+  body { overflow:hidden; background:var(--bg); }
 
   /* ── Slideshow ───────────────────────────────── */
   .slideshow { position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none; }
@@ -46,7 +46,7 @@
     backdrop-filter: blur(8px) !important;
     -webkit-backdrop-filter: blur(8px) !important;
   }
-  .admin-main { overflow-y:auto; height:100vh; }
+  .admin-main { overflow-y:scroll; height:100vh; scrollbar-gutter:stable; }
   .role-badge {
     display:inline-flex;align-items:center;gap:.375rem;
     padding:.25rem .75rem;border-radius:999px;
