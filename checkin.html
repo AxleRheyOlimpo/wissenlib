@@ -73,6 +73,18 @@
     -webkit-backdrop-filter:blur(12px);
   }
 
+  /* ── NEU Library page title ──────────────────── */
+  .ci-neu-header {
+    font-size:1.1rem;
+    font-weight:800;
+    color:var(--p);
+    letter-spacing:-.02em;
+    text-align:center;
+    margin-bottom:.875rem;
+    padding-bottom:.75rem;
+    border-bottom:2px solid var(--p-20);
+  }
+
   /* ── Welcome banner ──────────────────────────── */
   .ci-banner {
     background:linear-gradient(135deg, var(--p) 0%, color-mix(in srgb, var(--p) 75%, var(--s)) 100%);
@@ -181,7 +193,10 @@
 <div class="ci-body">
   <div class="ci-card" id="checkinCard">
 
-    <!-- Welcome banner -->
+    <!-- Page title -->
+    <div class="ci-neu-header">Welcome to NEU Library!</div>
+
+    <!-- Welcome banner (profile) -->
     <div class="ci-banner" id="welcomeBanner">
       <div class="ci-banner-avatar" id="bannerAvatar">…</div>
       <div style="flex:1;min-width:0;">
@@ -263,7 +278,7 @@
   <div class="success-icon">🎉</div>
   <div class="success-name" id="successName"></div>
   <div class="success-detail" id="successDetail"></div>
-  <div class="success-welcome">Welcome to the NEU Library! Enjoy your visit.</div>
+  <div class="success-welcome">Welcome to NEU Library!</div>
   <div class="success-countdown">
     Logging out in <span id="countdownNum" style="font-weight:700;color:var(--err);">3</span>s
     <div class="countdown-bar-wrap">
