@@ -13,11 +13,36 @@
     display:flex;align-items:center;justify-content:center;font-size:2rem;
     margin:0 auto .625rem;
   }
+  /* Clock box sits on glass card — use theme-aware colors */
   .login-clock {
     background:var(--surface2);border:1px solid var(--border);
     border-radius:var(--radius);padding:.5rem 1rem;margin-bottom:1.25rem;
     display:flex;align-items:center;justify-content:center;gap:.875rem;
   }
+  .login-clock-time {
+    font-size:1.1rem;font-weight:800;
+    color:var(--p);
+    font-variant-numeric:tabular-nums;line-height:1;
+  }
+  .login-clock-date {
+    font-size:.75rem;font-weight:600;color:var(--text2);
+  }
+  /* Dark mode — clock box on dark glass */
+  [data-mode="dark"] .login-clock-time { color:#7EB3FF; }
+  [data-mode="dark"] .login-clock-date { color:#8094B8; }
+  [data-mode="dark"][data-palette="classic"] .login-clock-time { color:#4ADE80; }
+
+  /* App title on the glass auth card */
+  .login-app-name {
+    font-size:1.5rem;font-weight:800;letter-spacing:-.025em;
+    color:var(--text);margin-bottom:.15rem;
+  }
+  .login-app-sub {
+    font-size:.775rem;color:var(--muted);margin-bottom:1rem;
+  }
+  [data-mode="dark"] .login-app-name { color:#E2EAF8; }
+  [data-mode="dark"] .login-app-sub  { color:#6880A8; }
+
   .google-icon { width:18px;height:18px;vertical-align:middle;flex-shrink:0; }
 </style>
 </head>
@@ -64,14 +89,14 @@
       onerror="this.style.display='none';document.getElementById('logoFb').style.display='flex'"/>
     <div class="login-logo-fallback" id="logoFb" style="display:none;">📚</div>
 
-    <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.025em;color:var(--text);margin-bottom:.15rem;">WissenLib</div>
-    <div style="font-size:.775rem;color:var(--muted);margin-bottom:1rem;">NEU Library Visitor Log System</div>
+    <div class="login-app-name">WissenLib</div>
+    <div class="login-app-sub">NEU Library Visitor Log System</div>
 
     <!-- Clock -->
     <div class="login-clock">
-      <div id="loginTime" style="font-size:1.1rem;font-weight:800;color:var(--p);font-variant-numeric:tabular-nums;line-height:1;"></div>
+      <div id="loginTime" class="login-clock-time"></div>
       <span style="color:var(--border);">|</span>
-      <div id="loginDate" style="font-size:.75rem;font-weight:600;color:var(--text2);"></div>
+      <div id="loginDate" class="login-clock-date"></div>
     </div>
 
     <!-- Google Sign In -->
@@ -166,7 +191,7 @@ function showAdminChoice(user) {
   const name = (user.displayName || user.email).split(' ')[0];
   card.innerHTML = `
     <img src="images/logo.png" class="login-logo" alt="NEU Logo" onerror="this.style.display='none'"/>
-    <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.025em;color:var(--text);margin-bottom:.2rem;">WissenLib</div>
+    <div class="login-app-name" style="margin-bottom:.2rem;">WissenLib</div>
     <div style="margin:1.25rem 0 1.5rem;">
       <div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:.25rem;">Welcome back, ${name}!</div>
       <div style="font-size:.825rem;color:var(--muted);">Where would you like to go?</div>
@@ -189,9 +214,7 @@ const rfidCapture = document.getElementById('rfidCapture');
 const rfidLabel   = document.getElementById('rfidLabel');
 const rfidDot     = document.getElementById('rfidDot');
 
-// Keep the hidden input focused at all times so card tap goes straight to it
 function keepRfidFocus() {
-  // Only refocus if no other input/button is actively being used
   if (document.activeElement === document.body ||
       document.activeElement === null ||
       document.activeElement === rfidCapture) {
@@ -200,7 +223,6 @@ function keepRfidFocus() {
 }
 setInterval(keepRfidFocus, 300);
 document.addEventListener('click', e => {
-  // After any click that isn't on a button/input, restore focus
   if (!['INPUT','BUTTON','TEXTAREA','SELECT'].includes(e.target.tagName)) {
     setTimeout(() => rfidCapture.focus(), 100);
   }
@@ -213,12 +235,10 @@ rfidCapture.addEventListener('keydown', async (e) => {
   rfidCapture.value = '';
   if (!cardId) return;
 
-  // Show scanning state
   rfidDot.style.background = 'var(--warn)';
   rfidLabel.textContent = 'Scanning…';
 
   try {
-    // Look up user by studentId in Firestore
     const q    = query(collection(db, 'users'), where('studentId', '==', cardId));
     const snap = await getDocs(q);
 
@@ -244,7 +264,6 @@ rfidCapture.addEventListener('keydown', async (e) => {
       return;
     }
 
-    // Found — trigger Google sign-in with login_hint
     rfidDot.style.background = 'var(--ok)';
     rfidLabel.textContent = `Found: ${userData.displayName || userData.firstName} — opening Google…`;
 
@@ -255,7 +274,6 @@ rfidCapture.addEventListener('keydown', async (e) => {
       prompt:      'select_account'
     });
     await signInWithPopup(auth, provider);
-    // onAuthStateChanged handles the rest
 
   } catch(err) {
     rfidDot.style.background = 'var(--err)';
@@ -276,7 +294,6 @@ window.doGoogleLogin = async () => {
   err.style.display = 'none';
   try {
     await loginWithGoogle();
-    // onAuthStateChanged handles redirect
   } catch(e) {
     if (e.message === 'NO_ACCOUNT') {
       window.location.href = 'register.html';

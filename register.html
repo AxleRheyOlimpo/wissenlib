@@ -19,6 +19,9 @@
     background: var(--glass) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    border-bottom:1px solid var(--glass-b);
+    padding:.875rem 1.5rem; display:flex; align-items:center;
+    justify-content:space-between; box-shadow:0 1px 4px var(--shadow);
   }
   .reg-card {
     background:var(--glass) !important;
@@ -26,17 +29,35 @@
     backdrop-filter:blur(16px) saturate(180%);
     -webkit-backdrop-filter:blur(16px) saturate(180%);
   }
-  .reg-header {
-    background:var(--surface); border-bottom:1px solid var(--border);
-    padding:.875rem 1.5rem; display:flex; align-items:center;
-    justify-content:space-between; box-shadow:0 1px 4px var(--shadow);
-  }
   .reg-body { max-width:480px; margin:2rem auto; padding:0 1rem 3rem; }
   .reg-card {
-    background:var(--surface); border:1px solid var(--border);
     border-radius:1.25rem; padding:2rem;
     box-shadow:0 4px 24px var(--shadow);
   }
+
+  /* ── Header brand text on glass ─────────────── */
+  .reg-brand-name {
+    font-size:.9375rem; font-weight:800; letter-spacing:-.02em;
+    color:#F0F4FF;
+    text-shadow:0 1px 6px rgba(0,0,0,.3);
+  }
+  .reg-brand-sub {
+    font-size:.725rem;
+    color:rgba(255,255,255,.65);
+    text-shadow:0 1px 4px rgba(0,0,0,.25);
+  }
+
+  /* Sign out button on glass header — keep err color but ensure visibility */
+  .reg-signout {
+    color:var(--err) !important;
+    border-color:var(--err) !important;
+    text-shadow: none;
+  }
+
+  /* Dark mode overrides — less shadow needed */
+  [data-mode="dark"] .reg-brand-name { color:#E2EAF8; text-shadow:none; }
+  [data-mode="dark"] .reg-brand-sub  { color:#8094B8; text-shadow:none; }
+
   .google-badge {
     display:flex; align-items:center; gap:.75rem;
     background:var(--p-10); border:1px solid var(--p-20);
@@ -72,11 +93,11 @@
     <img src="images/logo.png" style="width:34px;height:34px;object-fit:contain;border-radius:.5rem;"
       alt="Logo" onerror="this.style.display='none'"/>
     <div>
-      <div style="font-size:.9375rem;font-weight:800;letter-spacing:-.02em;">WissenLib</div>
-      <div style="font-size:.725rem;color:var(--muted);">NEU Library</div>
+      <div class="reg-brand-name">WissenLib</div>
+      <div class="reg-brand-sub">NEU Library</div>
     </div>
   </div>
-  <button onclick="doLogout()" class="btn btn-ghost btn-sm" style="color:var(--err);border-color:var(--err);">Sign Out</button>
+  <button onclick="doLogout()" class="btn btn-ghost btn-sm reg-signout">Sign Out</button>
 </div>
 
 <!-- Form -->
@@ -177,18 +198,15 @@ window.toggleEmployeeMode = (on) => {
   }
 };
 
-// Auth check — must be signed in but have no Firestore doc
 onAuthStateChanged(auth, async user => {
   if (!user) { window.location.href = 'index.html'; return; }
 
-  // Show Google account info
   const name = user.displayName || user.email;
   const initials = name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('gAvatar').textContent = initials;
   document.getElementById('gName').textContent   = user.displayName || '';
   document.getElementById('gEmail').textContent  = user.email || '';
 
-  // If already has a profile, redirect
   const data = await getUserData(user.uid);
   if (data) {
     const role = await getUserRole(user.uid);

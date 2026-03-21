@@ -30,17 +30,18 @@
   }
   .ci-brand { display:flex; align-items:center; gap:.625rem; }
   .ci-brand img { width:32px;height:32px;object-fit:contain;border-radius:.4rem; }
-  .ci-brand-name { font-size:.9375rem;font-weight:800;letter-spacing:-.02em; }
-  .ci-brand-sub  { font-size:.68rem;color:var(--muted); }
+  .ci-brand-name { font-size:.9375rem;font-weight:800;letter-spacing:-.02em;color:#F0F4FF;text-shadow:0 1px 6px rgba(0,0,0,.3); }
+  .ci-brand-sub  { font-size:.68rem;color:rgba(255,255,255,.65);text-shadow:0 1px 4px rgba(0,0,0,.3); }
   .ci-clock {
     flex:1; text-align:center;
     display:flex; flex-direction:column; align-items:center; gap:.05rem;
   }
   .ci-clock-time {
-    font-size:1.2rem;font-weight:800;color:var(--p);
+    font-size:1.2rem;font-weight:800;color:#F0F4FF;
     font-variant-numeric:tabular-nums;letter-spacing:.01em;line-height:1;
+    text-shadow:0 1px 8px rgba(0,0,0,.35);
   }
-  .ci-clock-date { font-size:.7rem;color:var(--text2);font-weight:500; }
+  .ci-clock-date { font-size:.7rem;color:rgba(255,255,255,.72);font-weight:500;text-shadow:0 1px 4px rgba(0,0,0,.3); }
   .ci-signout {
     flex-shrink:0;
     padding:.4rem .8rem; border-radius:var(--radius-sm);
@@ -77,12 +78,13 @@
   .ci-neu-header {
     font-size:1.5rem;
     font-weight:800;
-    color:var(--p);
+    color:#F0F4FF;
     letter-spacing:-.025em;
     text-align:center;
     margin-bottom:.875rem;
     padding-bottom:.75rem;
-    border-bottom:2px solid var(--p-20);
+    border-bottom:2px solid rgba(255,255,255,.18);
+    text-shadow:0 1px 8px rgba(0,0,0,.35);
   }
 
   /* ── Welcome banner ──────────────────────────── */
