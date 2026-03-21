@@ -7,15 +7,16 @@
 <link rel="stylesheet" href="css/styles.css"/>
 <style>
   .login-card { text-align:center; max-width:360px; }
-  .login-logo { width:80px;height:80px;object-fit:contain;margin:0 auto .875rem;display:block;border-radius:.75rem; }
+  .login-logo { width:64px;height:64px;object-fit:contain;margin:0 auto .625rem;display:block;border-radius:.75rem; }
   .login-logo-fallback {
-    width:80px;height:80px;background:var(--p);border-radius:.875rem;
-    display:flex;align-items:center;justify-content:center;font-size:2.5rem;
-    margin:0 auto .875rem;
+    width:64px;height:64px;background:var(--p);border-radius:.875rem;
+    display:flex;align-items:center;justify-content:center;font-size:2rem;
+    margin:0 auto .625rem;
   }
   .login-clock {
     background:var(--surface2);border:1px solid var(--border);
-    border-radius:var(--radius);padding:.75rem 1.25rem;margin-bottom:1.5rem;
+    border-radius:var(--radius);padding:.5rem 1rem;margin-bottom:1.25rem;
+    display:flex;align-items:center;justify-content:center;gap:.875rem;
   }
   .google-icon { width:18px;height:18px;vertical-align:middle;flex-shrink:0; }
 </style>
@@ -35,6 +36,26 @@
 <div id="themeBar" class="theme-bar"></div>
 <div id="toasts"></div>
 
+<!-- Blocked modal -->
+<div id="blockedModal" style="
+  display:none;position:fixed;inset:0;z-index:999;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:1rem;
+">
+  <div style="
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:1rem;padding:2rem;max-width:380px;width:100%;
+    text-align:center;box-shadow:0 24px 64px var(--shadow);
+  ">
+    <div style="font-size:2.5rem;margin-bottom:.75rem;">🚫</div>
+    <div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:.5rem;">Account Blocked</div>
+    <div style="font-size:.875rem;color:var(--text2);margin-bottom:1.25rem;">
+      Your account has been blocked. Please contact the <strong>library staff</strong> or the <strong>library administrator</strong> to resolve this.
+    </div>
+    <button onclick="document.getElementById('blockedModal').style.display='none'" class="btn btn-ghost btn-full">Close</button>
+  </div>
+</div>
+
 <div class="auth-page">
   <div class="auth-card login-card" id="loginCard">
 
@@ -43,13 +64,14 @@
       onerror="this.style.display='none';document.getElementById('logoFb').style.display='flex'"/>
     <div class="login-logo-fallback" id="logoFb" style="display:none;">📚</div>
 
-    <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.025em;color:var(--text);margin-bottom:.2rem;">WissenLib</div>
-    <div style="font-size:.775rem;color:var(--muted);margin-bottom:1.5rem;">NEU Library Visitor Log System</div>
+    <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.025em;color:var(--text);margin-bottom:.15rem;">WissenLib</div>
+    <div style="font-size:.775rem;color:var(--muted);margin-bottom:1rem;">NEU Library Visitor Log System</div>
 
     <!-- Clock -->
     <div class="login-clock">
-      <div id="loginDate" style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.15rem;"></div>
-      <div id="loginTime" style="font-size:1.35rem;font-weight:800;color:var(--p);font-variant-numeric:tabular-nums;"></div>
+      <div id="loginTime" style="font-size:1.1rem;font-weight:800;color:var(--p);font-variant-numeric:tabular-nums;line-height:1;"></div>
+      <span style="color:var(--border);">|</span>
+      <div id="loginDate" style="font-size:.75rem;font-weight:600;color:var(--text2);"></div>
     </div>
 
     <!-- Google Sign In -->
@@ -64,6 +86,29 @@
     </button>
     <div style="font-size:.71rem;color:var(--muted);margin-top:.5rem;">NEU institutional accounts only (@neu.edu.ph)</div>
 
+    <!-- RFID divider -->
+    <div style="display:flex;align-items:center;gap:.75rem;margin:.625rem 0 .5rem;color:var(--muted);font-size:.72rem;">
+      <span style="flex:1;height:1px;background:var(--border);"></span>
+      or tap your ID card
+      <span style="flex:1;height:1px;background:var(--border);"></span>
+    </div>
+
+    <!-- RFID status indicator -->
+    <div id="rfidStatus" style="
+      font-size:.78rem;color:var(--muted);
+      display:flex;align-items:center;justify-content:center;gap:.4rem;
+      padding:.5rem; border-radius:var(--radius-sm);
+      background:var(--surface2); border:1px solid var(--border);
+    ">
+      <span id="rfidDot" style="width:8px;height:8px;border-radius:50%;background:var(--ok);flex-shrink:0;"></span>
+      <span id="rfidLabel">Ready — tap your ID card anytime</span>
+    </div>
+
+    <!-- Hidden RFID capture input — always focused -->
+    <input id="rfidCapture" type="text" autocomplete="off"
+      style="position:fixed;left:-9999px;top:-9999px;opacity:0;width:1px;height:1px;"
+      aria-hidden="true"/>
+
     <div id="loginErr" style="font-size:.8rem;color:var(--err);margin-top:.75rem;display:none;padding:.625rem;background:var(--surface2);border-radius:var(--radius-sm);"></div>
 
   </div>
@@ -71,9 +116,10 @@
 
 <script type="module">
 import { initTheme, buildThemeBar } from './js/theme.js';
-import { auth } from './js/firebase-config.js';
+import { auth, db } from './js/firebase-config.js';
 import { loginWithGoogle, getUserData, getUserRole, onAuthChange, logout } from './js/auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const { mode, palette } = initTheme();
 buildThemeBar(mode, palette);
@@ -105,6 +151,9 @@ onAuthStateChanged(auth, async user => {
     }
   } catch(e) {
     await logout();
+    if (e.message.toLowerCase().includes('blocked')) {
+      showBlockedModal();
+    }
   }
 });
 
@@ -129,7 +178,94 @@ function showAdminChoice(user) {
     </div>`;
 }
 
+function showBlockedModal() {
+  document.getElementById('blockedModal').style.display = 'flex';
+}
+
 window.doAdminLogout = async () => { await logout(); window.location.href = 'index.html'; };
+
+// ── RFID Passive Listener ─────────────────────────────────
+const rfidCapture = document.getElementById('rfidCapture');
+const rfidLabel   = document.getElementById('rfidLabel');
+const rfidDot     = document.getElementById('rfidDot');
+
+// Keep the hidden input focused at all times so card tap goes straight to it
+function keepRfidFocus() {
+  // Only refocus if no other input/button is actively being used
+  if (document.activeElement === document.body ||
+      document.activeElement === null ||
+      document.activeElement === rfidCapture) {
+    rfidCapture.focus();
+  }
+}
+setInterval(keepRfidFocus, 300);
+document.addEventListener('click', e => {
+  // After any click that isn't on a button/input, restore focus
+  if (!['INPUT','BUTTON','TEXTAREA','SELECT'].includes(e.target.tagName)) {
+    setTimeout(() => rfidCapture.focus(), 100);
+  }
+});
+
+rfidCapture.addEventListener('keydown', async (e) => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const cardId = rfidCapture.value.trim();
+  rfidCapture.value = '';
+  if (!cardId) return;
+
+  // Show scanning state
+  rfidDot.style.background = 'var(--warn)';
+  rfidLabel.textContent = 'Scanning…';
+
+  try {
+    // Look up user by studentId in Firestore
+    const q    = query(collection(db, 'users'), where('studentId', '==', cardId));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      rfidDot.style.background = 'var(--err)';
+      rfidLabel.textContent = 'ID not found — please register first';
+      setTimeout(() => {
+        rfidDot.style.background = 'var(--ok)';
+        rfidLabel.textContent = 'Ready — tap your ID card anytime';
+      }, 3000);
+      return;
+    }
+
+    const userData = snap.docs[0].data();
+    if (userData.blocked) {
+      rfidDot.style.background = 'var(--err)';
+      rfidLabel.textContent = 'Account blocked — contact library staff';
+      showBlockedModal();
+      setTimeout(() => {
+        rfidDot.style.background = 'var(--ok)';
+        rfidLabel.textContent = 'Ready — tap your ID card anytime';
+      }, 4000);
+      return;
+    }
+
+    // Found — trigger Google sign-in with login_hint
+    rfidDot.style.background = 'var(--ok)';
+    rfidLabel.textContent = `Found: ${userData.displayName || userData.firstName} — opening Google…`;
+
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      hd:          'neu.edu.ph',
+      login_hint:  userData.email,
+      prompt:      'select_account'
+    });
+    await signInWithPopup(auth, provider);
+    // onAuthStateChanged handles the rest
+
+  } catch(err) {
+    rfidDot.style.background = 'var(--err)';
+    rfidLabel.textContent = 'Error: ' + err.message;
+    setTimeout(() => {
+      rfidDot.style.background = 'var(--ok)';
+      rfidLabel.textContent = 'Ready — tap your ID card anytime';
+    }, 3000);
+  }
+});
 
 window.doGoogleLogin = async () => {
   const btn = document.getElementById('btnGoogle');
