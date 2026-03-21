@@ -6,7 +6,19 @@
 <title>WissenLib — Check In</title>
 <link rel="stylesheet" href="css/styles.css"/>
 <style>
-  body { background:var(--bg); min-height:100vh; display:flex; flex-direction:column; }
+  body { background:var(--bg); min-height:100vh; display:flex; flex-direction:column; position:relative; }
+
+  /* ── Slideshow ───────────────────────────────── */
+  .slideshow { position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .slide { position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;animation:fadeSlide 30s infinite;will-change:opacity; }
+  .slide:nth-child(1){animation-delay:0s}.slide:nth-child(2){animation-delay:6s}
+  .slide:nth-child(3){animation-delay:12s}.slide:nth-child(4){animation-delay:18s}
+  .slide:nth-child(5){animation-delay:20s}.slide:nth-child(6){animation-delay:25s}
+  @keyframes fadeSlide{0%{opacity:0}6%{opacity:1}20%{opacity:1}26%{opacity:0}100%{opacity:0}}
+  .slide-overlay { position:absolute;inset:0;background:var(--overlay);backdrop-filter:blur(2px); }
+
+  /* Make header and card sit above slideshow */
+  .ci-header, .ci-body, #toasts { position:relative; z-index:10; }
 
   /* ── Header ─────────────────────────────────── */
   .ci-header {
@@ -46,10 +58,19 @@
 
   /* ── Card ────────────────────────────────────── */
   .ci-card {
-    background:var(--surface); border:1px solid var(--border);
+    background:var(--glass);
+    border:1px solid var(--glass-b);
+    backdrop-filter:blur(16px) saturate(180%);
+    -webkit-backdrop-filter:blur(16px) saturate(180%);
     border-radius:1.25rem; padding:1.75rem 2rem;
     width:100%; max-width:600px;
-    box-shadow:0 6px 28px var(--shadow);
+    box-shadow:0 8px 32px var(--shadow);
+  }
+  /* Make header slightly frosted too */
+  .ci-header {
+    background:var(--glass) !important;
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
   }
 
   /* ── Welcome banner ──────────────────────────── */
@@ -64,7 +85,9 @@
     background:rgba(255,255,255,.25);
     display:flex; align-items:center; justify-content:center;
     font-size:1.1rem; font-weight:800; letter-spacing:-.02em;
+    overflow:hidden;
   }
+  .ci-banner-avatar img { width:100%;height:100%;object-fit:cover;border-radius:50%; }
   .ci-banner-greeting { font-size:.72rem; opacity:.8; font-weight:500; }
   .ci-banner-name { font-size:1.1rem; font-weight:800; letter-spacing:-.02em; line-height:1.2; margin-top:.1rem; }
   .ci-banner-meta { margin-top:.35rem; display:flex; gap:.5rem; flex-wrap:wrap; }
@@ -126,6 +149,17 @@
 </style>
 </head>
 <body>
+
+<!-- ── Slideshow ─────────────────────────────────────── -->
+<div class="slideshow" aria-hidden="true">
+  <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img1.jpg')"></div>
+  <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img2.jpg')"></div>
+  <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img3.jpg')"></div>
+  <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img4.jpg')"></div>
+  <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img5.jpg')"></div>
+  <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img6.jpg')"></div>
+  <div class="slide-overlay"></div>
+</div>
 
 <!-- ── Header ──────────────────────────────────────── -->
 <div class="ci-header">
@@ -275,7 +309,14 @@ function renderProfile() {
     : (words[0]?.[0] || '?').toUpperCase();
 
   document.getElementById('visitorName').textContent  = name;
-  document.getElementById('bannerAvatar').textContent = initials;
+
+  // Use Google profile photo if available, fallback to initials
+  const avatarEl = document.getElementById('bannerAvatar');
+  if (currentUser.photoURL) {
+    avatarEl.innerHTML = `<img src="${currentUser.photoURL}" alt="${name}" onerror="this.parentElement.textContent='${initials}'"/>`;
+  } else {
+    avatarEl.textContent = initials;
+  }
 
   if (profileData.studentId) {
     const idEl = document.getElementById('visitorId');
