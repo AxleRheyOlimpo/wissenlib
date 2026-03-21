@@ -67,7 +67,50 @@
     line-height:1.2;
   }
   .admin-clock-time { font-size:.9rem;font-weight:700;color:var(--p);font-variant-numeric:tabular-nums; }
-  .admin-clock-date { font-size:.7rem;color:var(--muted); }
+  .admin-clock-date { font-size:.7rem;color:var(--text2); }
+
+  /* ── Dark mode readability fixes ─────────────────────── */
+  /* Sidebar text */
+  [data-mode="dark"] .sidebar #adminName  { color:#E2EAF8 !important; }
+  [data-mode="dark"] .sidebar #adminEmail { color:#8094B8 !important; }
+  [data-mode="dark"] .nav-item            { color:#8094B8; }
+  [data-mode="dark"] .nav-item:hover      { color:#E2EAF8; background:rgba(255,255,255,.08); }
+  [data-mode="dark"] .nav-item.active     { color:#93C5FD; background:rgba(61,111,224,.25); }
+
+  /* Topbar titles */
+  [data-mode="dark"] .admin-topbar-title  { color:#E2EAF8 !important; }
+  [data-mode="dark"] .admin-topbar .admin-clock-time { color:#7EB3FF !important; }
+  [data-mode="dark"] .admin-topbar .admin-clock-date { color:#8094B8 !important; }
+
+  /* Role badge — visible in both themes */
+  [data-mode="dark"] .role-badge { background:rgba(61,111,224,.3); color:#93C5FD; }
+
+  /* Stat cards */
+  [data-mode="dark"] .stat-card .stat-label { color:#8094B8 !important; }
+  [data-mode="dark"] .stat-card .stat-sub   { color:#8094B8 !important; }
+  [data-mode="dark"] .stat-num              { color:#7EB3FF !important; }
+  [data-mode="dark"] .stat-card.secondary .stat-num { color:#D8AE28 !important; }
+
+  /* Classic dark — green/red palette adjustments */
+  [data-mode="dark"][data-palette="classic"] .stat-num              { color:#4ADE80 !important; }
+  [data-mode="dark"][data-palette="classic"] .stat-card.secondary .stat-num { color:#F87171 !important; }
+  [data-mode="dark"][data-palette="classic"] .nav-item.active       { color:#4ADE80; background:rgba(37,176,102,.2); }
+  [data-mode="dark"][data-palette="classic"] .admin-topbar .admin-clock-time { color:#4ADE80 !important; }
+  [data-mode="dark"][data-palette="classic"] .role-badge            { background:rgba(37,176,102,.25); color:#4ADE80; }
+
+  /* Table text visibility in dark */
+  [data-mode="dark"] thead th  { color:#8094B8 !important; }
+  [data-mode="dark"] tbody td  { color:#E2EAF8 !important; }
+  [data-mode="dark"] .text-muted, [data-mode="dark"] .table-toolbar-title { color:#8094B8 !important; }
+  [data-mode="dark"] .table-toolbar-title { color:#E2EAF8 !important; }
+
+  /* Chart titles and filter labels */
+  [data-mode="dark"] .chart-title { color:#E2EAF8 !important; }
+  [data-mode="dark"] .filter-bar label { color:#8094B8 !important; }
+
+  /* Sidebar logo */
+  [data-mode="dark"] .sidebar-logo .logo-sm { color:#E2EAF8 !important; }
+  [data-mode="dark"] .sidebar-logo .logo-sm span { color:var(--p) !important; }
   @media(max-width:768px){
     body { overflow:auto; }
     .admin-main { overflow-y:unset;height:auto; }
