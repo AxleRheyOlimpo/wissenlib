@@ -151,9 +151,24 @@
       <div class="chart-wrap">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;">
           <div class="chart-title">Daily Visitor Activity</div>
-          <button class="btn-export" onclick="exportPDF()">⬇ Export PDF</button>
+          <div style="display:flex;gap:.5rem;">
+            <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+            <button class="btn-export" onclick="exportPDF()">⬇ Export PDF</button>
+          </div>
         </div>
         <canvas id="chartCanvas"></canvas>
+      </div>
+
+      <!-- Extra charts row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
+        <div class="chart-wrap" style="margin-bottom:0;">
+          <div class="chart-title">Reasons for Visit</div>
+          <canvas id="reasonChart" style="max-height:200px;"></canvas>
+        </div>
+        <div class="chart-wrap" style="margin-bottom:0;">
+          <div class="chart-title">Visits by College</div>
+          <canvas id="deptChart" style="max-height:200px;"></canvas>
+        </div>
       </div>
 
       <!-- Filters -->
@@ -196,6 +211,7 @@
           <div class="table-toolbar-title">Visitor Log</div>
           <div style="display:flex;gap:.5rem;align-items:center;">
             <span id="recordCount" style="font-size:.8rem;color:var(--muted);"></span>
+            <button class="btn-export" onclick="exportCSV()" style="padding:.35rem .75rem;font-size:.75rem;">CSV</button>
             <button class="btn-export" onclick="exportPDF()" style="padding:.35rem .75rem;font-size:.75rem;">PDF</button>
           </div>
         </div>
@@ -256,7 +272,8 @@ Object.keys(DEPARTMENTS).forEach(d => {
 
 let allVisits = [], filtered = [], currentPage = 1;
 const PAGE_SIZE = 15;
-let chartInstance = null, rangeMode = 'today', customFrom = '', customTo = '';
+let chartInstance = null, reasonChartInstance = null, deptChartInstance = null;
+let rangeMode = 'today', customFrom = '', customTo = '';
 let blockTarget = null, unsubVisits = null;
 
 // Auth guard
@@ -311,6 +328,7 @@ function loadData() {
     allVisits.sort((a,b)=>(b.checkInTimeISO||'').localeCompare(a.checkInTimeISO||''));
     applyFilters();
     buildChart(from,to);
+    buildExtraCharts();
     updateStatCards();
   }, err => toast('err','Load Error',err.message));
 }
@@ -359,6 +377,51 @@ function getDaysBetween(from,to){
   const days=[],cur=new Date(from+'T00:00:00'),end=new Date(to+'T00:00:00');
   while(cur<=end){days.push(cur.toISOString().slice(0,10));cur.setDate(cur.getDate()+1);}
   return days;
+}
+
+function buildExtraCharts() {
+  const cs = getComputedStyle(document.documentElement);
+  const colors = ['#1A4894','#C8960C','#16A34A','#DC2626','#2563EB','#9333EA'];
+
+  // Reason pie chart
+  const reasonMap = {};
+  allVisits.forEach(v => {
+    if (!v.reasonForVisit) return;
+    v.reasonForVisit.split(',').forEach(r => {
+      const key = r.trim().replace(/^Others:.*/, 'Others');
+      reasonMap[key] = (reasonMap[key] || 0) + 1;
+    });
+  });
+  const rLabels = Object.keys(reasonMap);
+  const rData   = Object.values(reasonMap);
+  if (reasonChartInstance) reasonChartInstance.destroy();
+  reasonChartInstance = new Chart(document.getElementById('reasonChart'), {
+    type: 'doughnut',
+    data: { labels: rLabels, datasets: [{ data: rData, backgroundColor: colors, borderWidth: 2, borderColor: cs.getPropertyValue('--surface').trim() }] },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { position: 'right', labels: { font: { family: 'Inter', size: 10 }, color: cs.getPropertyValue('--text2').trim(), boxWidth: 12 } } }
+    }
+  });
+
+  // Dept bar chart
+  const deptMap = {};
+  allVisits.forEach(v => { if (v.department) deptMap[v.department] = (deptMap[v.department] || 0) + 1; });
+  const dLabels = Object.keys(deptMap).sort((a,b) => deptMap[b] - deptMap[a]);
+  const dData   = dLabels.map(k => deptMap[k]);
+  if (deptChartInstance) deptChartInstance.destroy();
+  deptChartInstance = new Chart(document.getElementById('deptChart'), {
+    type: 'bar',
+    data: { labels: dLabels, datasets: [{ label: 'Visits', data: dData, backgroundColor: '#1A4894aa', borderColor: '#1A4894', borderWidth: 2, borderRadius: 4, borderSkipped: false }] },
+    options: {
+      responsive: true, maintainAspectRatio: true, indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, ticks: { stepSize: 1, color: cs.getPropertyValue('--muted').trim(), font: { family: 'Inter', size: 10 } }, grid: { color: cs.getPropertyValue('--border').trim() + '88' } },
+        y: { ticks: { color: cs.getPropertyValue('--text2').trim(), font: { family: 'Inter', size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
 }
 
 window.applyFilters = () => {
@@ -493,19 +556,44 @@ window.setView=(v)=>{
 };
 window.toggleSidebar=()=>document.getElementById('sidebar').classList.toggle('open');
 
+window.exportCSV=()=>{
+  const headers=['#','Name','Email','Student ID','Department','Program','Reason','Check-In','Type'];
+  const rows=filtered.map((v,i)=>[
+    i+1,
+    `"${(v.fullName||v.displayName||'').replace(/"/g,'""')}"`,
+    v.email||'',
+    v.studentId||'',
+    v.department||'',
+    v.program||'',
+    `"${(v.reasonForVisit||'').replace(/"/g,'""')}"`,
+    v.checkInTimeISO?new Date(v.checkInTimeISO).toLocaleString('en-PH'):v.date,
+    v.isEmployee?'Staff':'Student'
+  ]);
+  const csv=[headers.join(','),...rows.map(r=>r.join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const {from,to}=getDateRange();
+  a.href=url; a.download=`WissenLib_${from}_to_${to}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('ok','CSV Exported',`WissenLib_${from}_to_${to}.csv`);
+};
+
 window.exportPDF=()=>{
   const {jsPDF}=window.jspdf;
   const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const now=new Date();
+  const generatedAt=now.toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+    +' at '+now.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
   pdf.setFontSize(18);pdf.setFont('helvetica','bold');
   pdf.text('WissenLib — NEU Library Visitor Report',14,18);
   pdf.setFontSize(10);pdf.setFont('helvetica','normal');
   const {from,to}=getDateRange();
   pdf.text(`Date Range: ${fmtDate(from)} – ${fmtDate(to)}`,14,26);
-  pdf.text(`Generated: ${new Date().toLocaleString('en-PH')}   Total: ${filtered.length} record(s)`,14,32);
-  pdf.setFont('helvetica','bold');pdf.setFontSize(11);
-  pdf.text(`Total: ${filtered.length}  |  Today: ${allVisits.filter(v=>v.date===todayStr()).length}  |  Faculty/Staff: ${allVisits.filter(v=>v.isEmployee).length}`,14,40);
+  pdf.text(`Generated: ${generatedAt}`,14,32);
+  pdf.text(`Total records: ${filtered.length}  |  Faculty/Staff: ${allVisits.filter(v=>v.isEmployee).length}`,14,38);
   pdf.autoTable({
-    startY:46,
+    startY:44,
     head:[['#','Name','Student ID','Dept.','Program','Reason','Check-In','Type']],
     body:filtered.map((v,i)=>[
       i+1, v.fullName||v.displayName||'—', v.studentId||'—',
@@ -516,7 +604,7 @@ window.exportPDF=()=>{
     styles:{fontSize:8,cellPadding:3},
     headStyles:{fillColor:[26,72,148],fontStyle:'bold'},
     alternateRowStyles:{fillColor:[245,248,255]},
-    margin:{top:46}
+    margin:{top:44}
   });
   const fname=`WissenLib_Report_${from}_to_${to}.pdf`;
   pdf.save(fname);

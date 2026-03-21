@@ -238,6 +238,26 @@
   </div>
 </div>
 
+<!-- ── Blocked Modal ─────────────────────────────────── -->
+<div id="blockedModal" style="
+  display:none;position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:1rem;
+">
+  <div style="
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:1rem;padding:2rem;max-width:380px;width:100%;
+    text-align:center;box-shadow:0 24px 64px var(--shadow);
+  ">
+    <div style="font-size:2.5rem;margin-bottom:.75rem;">🚫</div>
+    <div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:.5rem;">Account Blocked</div>
+    <div style="font-size:.875rem;color:var(--text2);margin-bottom:1.25rem;">
+      Your account has been blocked. Please contact the <strong>library staff</strong> or the <strong>library administrator</strong> to resolve this.
+    </div>
+    <button onclick="doLogout()" class="btn btn-danger btn-full">Sign Out</button>
+  </div>
+</div>
+
 <!-- ── Success overlay ──────────────────────────────── -->
 <div class="success-overlay" id="successOverlay">
   <div class="success-icon">🎉</div>
@@ -290,7 +310,11 @@ onAuthStateChanged(auth, async user => {
     renderProfile();
     document.getElementById('btnCheckin').disabled = false;
   } catch(e) {
-    await logout(); window.location.href = 'index.html';
+    if (e.message.toLowerCase().includes('blocked')) {
+      document.getElementById('blockedModal').style.display = 'flex';
+    } else {
+      await logout(); window.location.href = 'index.html';
+    }
   }
 });
 
