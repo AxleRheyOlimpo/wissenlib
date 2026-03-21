@@ -6,236 +6,303 @@
 <title>WissenLib — Check In</title>
 <link rel="stylesheet" href="css/styles.css"/>
 <style>
-  .others-box { display:none; margin-top:.75rem; }
+  /* ── Kiosk layout ─────────────────────────────── */
+  html, body { height:100%; overflow:hidden; }
+  .kiosk-page {
+    height:100vh; display:flex; flex-direction:column;
+    background:var(--bg); overflow:hidden;
+  }
+
+  /* ── Topbar ───────────────────────────────────── */
+  .kiosk-topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:.625rem 1.5rem; background:var(--surface);
+    border-bottom:1px solid var(--border);
+    box-shadow:0 1px 4px var(--shadow);
+    flex-shrink:0; gap:1rem;
+  }
+  .kiosk-brand { display:flex; align-items:center; gap:.625rem; flex-shrink:0; }
+  .kiosk-brand img { width:32px;height:32px;object-fit:contain;border-radius:.4rem; }
+  .kiosk-brand-name { font-size:.9375rem;font-weight:800;letter-spacing:-.02em; }
+  .kiosk-brand-sub  { font-size:.68rem;color:var(--muted); }
+  .kiosk-clock {
+    text-align:center; flex:1;
+    display:flex; flex-direction:column; align-items:center; gap:.1rem;
+  }
+  .kiosk-clock-time {
+    font-size:1.15rem;font-weight:800;color:var(--p);
+    font-variant-numeric:tabular-nums;letter-spacing:.01em;line-height:1;
+  }
+  .kiosk-clock-date { font-size:.72rem;color:var(--text2);font-weight:500; }
+  .kiosk-signout {
+    flex-shrink:0;
+    padding:.45rem .875rem; border-radius:var(--radius-sm);
+    background:none; border:1.5px solid var(--err);
+    color:var(--err); font-size:.8rem; font-weight:600;
+    cursor:pointer; transition:all .18s;
+  }
+  .kiosk-signout:hover { background:var(--err); color:#fff; }
+
+  /* ── Body: split ──────────────────────────────── */
+  .kiosk-body {
+    flex:1; display:flex; overflow:hidden;
+  }
+
+  /* Left: profile */
+  .kiosk-left {
+    width:280px; flex-shrink:0;
+    background:var(--surface); border-right:1px solid var(--border);
+    padding:1.5rem 1.25rem;
+    display:flex; flex-direction:column; justify-content:center;
+    overflow-y:auto;
+  }
+  .profile-greeting { font-size:.78rem;opacity:.75;font-weight:500;color:var(--text2);margin-bottom:.25rem; }
+  .profile-name { font-size:1.25rem;font-weight:800;letter-spacing:-.02em;color:var(--text);line-height:1.2;margin-bottom:.5rem; }
+  .profile-id {
+    display:inline-flex; align-items:center; gap:.35rem;
+    font-size:.78rem;font-family:monospace;font-weight:600;
+    color:var(--p); background:var(--p-10);
+    border-radius:999px; padding:.2rem .6rem; margin-bottom:.5rem;
+  }
+  .profile-prog { font-size:.8rem;color:var(--muted);font-weight:500; }
+  .profile-divider { height:1px;background:var(--border);margin:1rem 0; }
+
+  /* Right: reasons */
+  .kiosk-right {
+    flex:1; display:flex; flex-direction:column;
+    padding:1.25rem 1.5rem; overflow-y:auto;
+  }
+  .reason-section-head {
+    font-size:.75rem;font-weight:700;color:var(--s);
+    text-transform:uppercase;letter-spacing:.07em;
+    border-bottom:2px solid var(--s);padding-bottom:.35rem;
+    margin-bottom:.875rem;
+  }
+  .others-box { display:none; margin-top:.625rem; }
   .others-box.show { display:block; }
-  /* Override floating theme bar — inline in topbar instead */
-  #themeBar.theme-bar {
-    position: static !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+
+  /* ── Confirm button bar ───────────────────────── */
+  .kiosk-confirm-bar {
+    flex-shrink:0; padding:.875rem 1.5rem;
+    background:var(--surface); border-top:1px solid var(--border);
+    display:flex; gap:.75rem; align-items:center;
   }
-  .clock { font-size:.875rem; color:var(--text2); font-weight:500; font-variant-numeric:tabular-nums; }
-  .checkin-success {
-    display:none; text-align:center; padding:2rem 1rem;
-    animation: fadeIn .4s ease;
+
+  /* ── Success overlay ──────────────────────────── */
+  .success-overlay {
+    display:none; position:fixed; inset:0; z-index:200;
+    background:var(--surface); flex-direction:column;
+    align-items:center; justify-content:center; text-align:center;
+    padding:2rem;
   }
-  .checkin-success.show { display:block; }
-  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
-  .big-check { font-size:4rem; display:block; margin-bottom:1rem; }
-  .success-name { font-size:1.5rem; font-weight:800; letter-spacing:-.02em; }
-  .success-sub  { font-size:.9rem; color:var(--text2); margin-top:.35rem; }
-  .new-checkin-btn { margin-top:1.5rem; }
+  .success-overlay.show { display:flex; animation:fadeIn .35s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:scale(.97)} to{opacity:1;transform:none} }
+  .success-icon { font-size:5rem; margin-bottom:1rem; }
+  .success-name { font-size:1.75rem;font-weight:800;letter-spacing:-.025em;color:var(--text); }
+  .success-detail { font-size:.9rem;color:var(--text2);margin-top:.35rem;max-width:400px; }
+  .success-welcome {
+    margin-top:1.25rem; padding:.875rem 1.5rem;
+    background:var(--p-10); border-radius:var(--radius);
+    font-size:.875rem;color:var(--p);font-weight:600;
+  }
+  .success-countdown {
+    margin-top:1.25rem; font-size:.82rem; color:var(--muted);
+  }
+  .countdown-bar-wrap {
+    width:220px; height:4px; background:var(--border);
+    border-radius:2px; overflow:hidden; margin:.4rem auto 0;
+  }
+  .countdown-bar { height:100%;background:var(--err);width:100%;transition:width 1s linear; }
+
+  /* ── Mobile ───────────────────────────────────── */
+  @media(max-width:640px) {
+    html, body { overflow:auto; height:auto; }
+    .kiosk-page { height:auto; overflow:visible; }
+    .kiosk-body { flex-direction:column; overflow:visible; }
+    .kiosk-left { width:100%; border-right:none; border-bottom:1px solid var(--border); padding:1rem 1.25rem; justify-content:flex-start; }
+    .kiosk-right { padding:1rem 1.25rem; overflow:visible; }
+    .kiosk-clock-time { font-size:.95rem; }
+    .kiosk-clock-date { font-size:.65rem; }
+    .reason-grid { grid-template-columns:repeat(2,1fr); gap:.5rem; }
+    .reason-tile { padding:.75rem .35rem; font-size:.72rem; }
+    .reason-tile .icon { font-size:1.25rem; }
+    .kiosk-confirm-bar { padding:.75rem 1.25rem; }
+  }
+  @media(max-width:360px) {
+    .kiosk-brand-name { font-size:.85rem; }
+    .profile-name { font-size:1rem; }
+  }
 </style>
 </head>
-<body class="checkin-page">
+<body>
 
-<!-- ── Top Bar ────────────────────────────────────────────── -->
-<div class="checkin-topbar">
-  <div style="display:flex;align-items:center;gap:.75rem;">
-    <div class="logo-icon" style="width:34px;height:34px;border-radius:.5rem;font-size:1.1rem;">📚</div>
-    <div>
-      <div style="font-size:.9375rem;font-weight:800;letter-spacing:-.02em;">WissenLib</div>
-      <div style="font-size:.725rem;color:var(--muted);">NEU Library</div>
+<div class="kiosk-page" id="kioskPage">
+
+  <!-- ── Topbar ─────────────────────────────────── -->
+  <div class="kiosk-topbar">
+    <div class="kiosk-brand">
+      <img src="images/logo.png" alt="Logo" onerror="this.style.display='none'"/>
+      <div>
+        <div class="kiosk-brand-name">WissenLib</div>
+        <div class="kiosk-brand-sub">NEU Library</div>
+      </div>
+    </div>
+    <div class="kiosk-clock">
+      <div class="kiosk-clock-time" id="clockTime"></div>
+      <div class="kiosk-clock-date" id="clockDate"></div>
+    </div>
+    <button class="kiosk-signout" onclick="doLogout()">Sign Out</button>
+  </div>
+
+  <!-- ── Body ───────────────────────────────────── -->
+  <div class="kiosk-body">
+
+    <!-- Left: Profile -->
+    <div class="kiosk-left" id="profilePanel">
+      <div class="profile-greeting">Welcome back,</div>
+      <div class="profile-name" id="visitorName">Loading…</div>
+      <div class="profile-id" id="visitorId" style="display:none;"></div>
+      <div class="profile-prog" id="visitorProg"></div>
+      <div class="profile-divider"></div>
+      <div style="font-size:.75rem;color:var(--muted);">Select your reason(s) for visiting and tap Confirm.</div>
+    </div>
+
+    <!-- Right: Reasons -->
+    <div class="kiosk-right">
+      <div class="reason-section-head">Reason for Visit <span style="font-size:.65rem;font-weight:400;color:var(--muted);">(select all that apply)</span></div>
+
+      <div class="reason-grid" id="reasonGrid">
+        <div class="reason-tile" onclick="selectReason(this,'Study')" data-reason="Study">
+          <span class="icon">📖</span>Study
+        </div>
+        <div class="reason-tile" onclick="selectReason(this,'Research')" data-reason="Research">
+          <span class="icon">🔬</span>Research
+        </div>
+        <div class="reason-tile" onclick="selectReason(this,'Borrow / Return')" data-reason="Borrow / Return">
+          <span class="icon">📦</span>Borrow / Return
+        </div>
+        <div class="reason-tile" onclick="selectReason(this,'Student Lounge')" data-reason="Student Lounge">
+          <span class="icon">🛋️</span>Student Lounge
+        </div>
+        <div class="reason-tile" onclick="selectReason(this,'Internet Access')" data-reason="Internet Access">
+          <span class="icon">💻</span>Internet Access
+        </div>
+        <div class="reason-tile" onclick="selectReason(this,'Others')" data-reason="Others">
+          <span class="icon">✏️</span>Others
+        </div>
+      </div>
+
+      <div class="others-box" id="othersBox">
+        <label for="othersText" style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:.35rem;">Describe your reason</label>
+        <textarea class="inp" id="othersText" rows="2"
+          placeholder="e.g. Thesis defense, meeting with professor…"
+          style="resize:none;"></textarea>
+      </div>
+
+      <div id="checkinErr" style="font-size:.8rem;color:var(--err);background:var(--surface2);border-radius:var(--radius-sm);padding:.5rem .75rem;margin-top:.625rem;display:none;"></div>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:.75rem;">
-    <div id="themeBar" class="theme-bar" style="position:static;box-shadow:none;background:transparent;border:none;padding:0;backdrop-filter:none;"></div>
-  </div>
-</div>
 
-<!-- ── DateTime Bar ───────────────────────────────────────── -->
-<div style="
-  background:var(--surface2); border-bottom:1px solid var(--border);
-  padding:.5rem 1.5rem; display:flex; align-items:center; justify-content:center;
-  gap:1.25rem; flex-wrap:wrap;
-">
-  <span id="clockDate" style="font-size:.85rem;font-weight:600;color:var(--text2);"></span>
-  <span style="color:var(--border);font-size:.9rem;">|</span>
-  <span id="clockTime" style="font-size:.95rem;font-weight:700;color:var(--p);font-variant-numeric:tabular-nums;letter-spacing:.02em;"></span>
+  <!-- ── Confirm bar ────────────────────────────── -->
+  <div class="kiosk-confirm-bar">
+    <button class="btn btn-primary btn-full" id="btnCheckin" onclick="doCheckin()" style="padding:.875rem;font-size:.9375rem;flex:1;">
+      Confirm Check-In
+    </button>
+  </div>
+
+</div><!-- /kiosk-page -->
+
+<!-- ── Success overlay ────────────────────────── -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-icon">🎉</div>
+  <div class="success-name" id="successName"></div>
+  <div class="success-detail" id="successDetail"></div>
+  <div class="success-welcome">Welcome to the NEU Library! Enjoy your visit.</div>
+  <div class="success-countdown">
+    Logging out in <span id="countdownNum" style="font-weight:700;color:var(--err);">3</span>s
+    <div class="countdown-bar-wrap">
+      <div class="countdown-bar" id="countdownBar"></div>
+    </div>
+  </div>
 </div>
 
 <div id="toasts"></div>
-
-<!-- ── Body ───────────────────────────────────────────────── -->
-<div class="checkin-body">
-  <div class="checkin-card" id="checkinCard">
-
-    <!-- Welcome banner (populated by JS) -->
-    <div class="welcome-banner" id="welcomeBanner">
-      <div class="greeting">Welcome back,</div>
-      <div class="name" id="visitorName">Loading…</div>
-      <div class="prog" id="visitorProg"></div>
-      <div class="msg">Please select your reason for visiting the library today.</div>
-    </div>
-
-    <!-- Reason for visit -->
-    <p class="section-head" style="color:var(--s);border-bottom:2px solid var(--s);padding-bottom:.35rem;">Reason for Visit</p>
-    <div class="reason-grid" id="reasonGrid">
-      <div class="reason-tile" onclick="selectReason(this,'Study')" data-reason="Study">
-        <span class="icon">📖</span>Study
-      </div>
-      <div class="reason-tile" onclick="selectReason(this,'Research')" data-reason="Research">
-        <span class="icon">🔬</span>Research
-      </div>
-      <div class="reason-tile" onclick="selectReason(this,'Borrow / Return')" data-reason="Borrow / Return">
-        <span class="icon">📦</span>Borrow / Return
-      </div>
-      <div class="reason-tile" onclick="selectReason(this,'Group Study')" data-reason="Group Study">
-        <span class="icon">👥</span>Group Study
-      </div>
-      <div class="reason-tile" onclick="selectReason(this,'Internet Access')" data-reason="Internet Access">
-        <span class="icon">💻</span>Internet Access
-      </div>
-      <div class="reason-tile" onclick="selectReason(this,'Others')" data-reason="Others">
-        <span class="icon">✏️</span>Others
-      </div>
-    </div>
-
-    <!-- Others text area -->
-    <div class="others-box" id="othersBox">
-      <label for="othersText">Please describe your reason</label>
-      <textarea class="inp" id="othersText" rows="3"
-        placeholder="e.g. Meet with professor, thesis defense review…"
-        style="resize:vertical;"></textarea>
-    </div>
-
-    <div class="err-msg" id="checkinErr" style="display:none;"></div>
-
-    <button class="btn btn-primary btn-full mt-2" id="btnCheckin"
-      onclick="doCheckin()" style="padding:.875rem;">
-      ✅ &nbsp;Confirm Check-In
-    </button>
-
-    <button onclick="doLogout()" style="
-      width:100%; margin-top:.6rem; padding:.6rem;
-      background:none; border:1.5px solid var(--error,#e53e3e);
-      color:var(--error,#e53e3e); border-radius:var(--radius);
-      font-size:.85rem; font-weight:600; cursor:pointer;
-      transition: all .18s;
-    " onmouseover="this.style.background='var(--error,#e53e3e)';this.style.color='#fff'"
-       onmouseout="this.style.background='none';this.style.color='var(--error,#e53e3e)'">
-      Sign Out
-    </button>
-
-    <!-- ── Success screen ──────────────────────────────────── -->
-    <div class="checkin-success" id="successScreen">
-      <span class="big-check">🎉</span>
-      <div class="success-name" id="successName"></div>
-      <div class="success-sub" id="successSub"></div>
-      <div style="margin-top:1.25rem;padding:1rem;background:var(--p-10);border-radius:var(--radius);font-size:.875rem;color:var(--p);font-weight:600;">
-        Welcome to NEU Library! Enjoy your visit.
-      </div>
-      <!-- Auto-logout countdown -->
-      <div id="countdownWrap" style="margin-top:1rem;font-size:.82rem;color:var(--muted);text-align:center;">
-        Logging out in <span id="countdownNum" style="font-weight:700;color:var(--err);">8</span>s…
-        <div style="margin-top:.4rem;height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
-          <div id="countdownBar" style="height:100%;background:var(--err);width:100%;transition:width 1s linear;"></div>
-        </div>
-      </div>
-      <button class="btn btn-ghost btn-full new-checkin-btn" onclick="cancelCountdownAndReset()">
-        ✋ Stay (Another Check-In)
-      </button>
-    </div>
-
-  </div><!-- /checkin-card -->
-</div>
 
 <script type="module">
 import { initTheme, buildThemeBar } from './js/theme.js';
 import { auth, db } from './js/firebase-config.js';
 import { getUserRole, getUserData, logout, onAuthChange } from './js/auth.js';
-import {
-  collection, addDoc, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// Theme
 const { mode, palette } = initTheme();
 buildThemeBar(mode, palette);
 
-// Clock with seconds
+// Clock
 function tick() {
   const now = new Date();
-  document.getElementById('clockDate').textContent =
-    now.toLocaleDateString('en-PH', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
   document.getElementById('clockTime').textContent =
-    now.toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true });
+    now.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+  document.getElementById('clockDate').textContent =
+    now.toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
 }
 tick(); setInterval(tick, 1000);
 
-// Auth guard
+// Auth
 let currentUser = null;
 let profileData = null;
-
-// Check if admin is explicitly choosing visitor mode via URL param
 const isAdminVisitor = new URLSearchParams(window.location.search).get('mode') === 'visitor';
 
-// Disable check-in until profile is ready
 document.getElementById('btnCheckin').disabled = true;
 
 onAuthStateChanged(auth, async user => {
   if (!user) { window.location.href = 'index.html'; return; }
   try {
     const role = await getUserRole(user.uid);
-    if (role === 'admin' && !isAdminVisitor) {
-      window.location.href = 'admin.html'; return;
-    }
+    if (role === 'admin' && !isAdminVisitor) { window.location.href = 'admin.html'; return; }
     currentUser = user;
     profileData = await getUserData(user.uid);
-
-    // Google users may have an incomplete profile — fill from Firebase Auth as fallback
-    if (profileData && !profileData.firstName && user.displayName) {
-      const parts = user.displayName.split(' ');
-      profileData.firstName = parts[0] || '';
-      profileData.lastName  = parts.slice(1).join(' ') || '';
-    }
-    if (profileData && !profileData.email) {
-      profileData.email = user.email || '';
-    }
-
-    renderWelcome();
+    if (!profileData) { window.location.href = 'register.html'; return; }
+    renderProfile();
     document.getElementById('btnCheckin').disabled = false;
   } catch(e) {
-    toast('err','Access Denied', e.message);
-    await logout();
-    window.location.href = 'index.html';
+    await logout(); window.location.href = 'index.html';
   }
 });
 
-function renderWelcome() {
+function renderProfile() {
   if (!profileData) return;
-  const fn = profileData.firstName || '';
-  const ln = profileData.lastName  || '';
-  document.getElementById('visitorName').textContent =
-    `${fn} ${profileData.middleInitial ? profileData.middleInitial + '. ' : ''}${ln}`;
+  const name = profileData.displayName ||
+    `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim() ||
+    currentUser.email;
+  document.getElementById('visitorName').textContent = name;
+
+  if (profileData.studentId) {
+    const idEl = document.getElementById('visitorId');
+    idEl.textContent = profileData.studentId;
+    idEl.style.display = 'inline-flex';
+  }
   document.getElementById('visitorProg').textContent =
     [profileData.program, profileData.department].filter(Boolean).join(' · ');
 }
 
-// Reason selection — multiple allowed
+// Multi-select reasons
 let selectedReasons = new Set();
 
 window.selectReason = (el, reason) => {
-  if (reason === 'Others') {
-    el.classList.toggle('active');
-    if (el.classList.contains('active')) {
-      selectedReasons.add(reason);
-    } else {
-      selectedReasons.delete(reason);
-    }
+  el.classList.toggle('active');
+  if (el.classList.contains('active')) {
+    selectedReasons.add(reason);
   } else {
-    el.classList.toggle('active');
-    if (el.classList.contains('active')) {
-      selectedReasons.add(reason);
-    } else {
-      selectedReasons.delete(reason);
-    }
+    selectedReasons.delete(reason);
   }
-  document.getElementById('othersBox').classList.toggle('show', selectedReasons.has('Others'));
+  const othersBox = document.getElementById('othersBox');
+  if (selectedReasons.has('Others')) {
+    othersBox.classList.add('show');
+  } else {
+    othersBox.classList.remove('show');
+    document.getElementById('othersText').value = '';
+  }
   document.getElementById('checkinErr').style.display = 'none';
 };
 
@@ -245,10 +312,9 @@ window.doCheckin = async () => {
   errEl.style.display = 'none';
 
   if (!profileData || !currentUser) {
-    errEl.textContent = 'Profile not loaded yet. Please wait a moment and try again.';
+    errEl.textContent = 'Profile not loaded. Please wait.';
     errEl.style.display = 'block'; return;
   }
-
   if (selectedReasons.size === 0) {
     errEl.textContent = 'Please select at least one reason for your visit.';
     errEl.style.display = 'block'; return;
@@ -258,7 +324,7 @@ window.doCheckin = async () => {
   if (reasons.includes('Others')) {
     const txt = document.getElementById('othersText').value.trim();
     if (!txt) {
-      errEl.textContent = 'Please describe your reason for visiting.';
+      errEl.textContent = 'Please describe your reason under "Others".';
       errEl.style.display = 'block'; return;
     }
     reasons = reasons.filter(r => r !== 'Others');
@@ -272,114 +338,64 @@ window.doCheckin = async () => {
 
   try {
     const now  = new Date();
-    const date = now.toISOString().slice(0,10); // YYYY-MM-DD
+    const date = now.toISOString().slice(0,10);
+    const name = profileData.displayName ||
+      `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim();
 
     await addDoc(collection(db, 'visits'), {
-      uid:          currentUser.uid,
-      email:        profileData.email        || '',
-      studentId:    profileData.studentId    || '',
-      firstName:    profileData.firstName    || '',
-      lastName:     profileData.lastName     || '',
-      fullName:     `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim(),
-      middleInitial:profileData.middleInitial|| '',
-      department:   profileData.department   || '',
-      program:      profileData.program      || '',
-      isEmployee:   profileData.isEmployee   || false,
-      reasonForVisit: reasonForVisit,
+      uid:           currentUser.uid,
+      email:         profileData.email         || currentUser.email || '',
+      displayName:   name,
+      studentId:     profileData.studentId     || '',
+      firstName:     profileData.firstName     || '',
+      lastName:      profileData.lastName      || '',
+      fullName:      name,
+      middleInitial: profileData.middleInitial || '',
+      department:    profileData.department    || '',
+      program:       profileData.program       || '',
+      isEmployee:    profileData.isEmployee    || false,
+      reasonForVisit,
       date,
-      checkInTime:  serverTimestamp(),
+      checkInTime:    serverTimestamp(),
       checkInTimeISO: now.toISOString()
     });
 
-    showSuccess(reasonForVisit);
+    showSuccess(name, reasonForVisit);
   } catch(e) {
-    errEl.textContent = 'Error saving check-in: ' + e.message;
+    errEl.textContent = 'Error: ' + e.message;
     errEl.style.display = 'block';
     btn.disabled = false;
-    btn.innerHTML = '✅ &nbsp;Confirm Check-In';
+    btn.innerHTML = 'Confirm Check-In';
   }
 };
 
-let countdownTimer = null;
+// Success + auto-logout
+function showSuccess(name, reason) {
+  document.getElementById('successName').textContent  = name;
+  document.getElementById('successDetail').textContent = reason;
+  document.getElementById('successOverlay').classList.add('show');
 
-function showSuccess(reason) {
-  const fn = profileData.firstName || '';
-  const ln = profileData.lastName  || '';
-  document.getElementById('successName').textContent = `${fn} ${ln}`;
-  document.getElementById('successSub').textContent  =
-    `${profileData.program || ''} — ${reason}`;
-
-  // Hide the form, show success
-  document.querySelectorAll(
-    '.welcome-banner, .section-head, .reason-grid, .others-box, #checkinErr, #btnCheckin'
-  ).forEach(el => el.style.display = 'none');
-  // Also hide sign out button during success
-  document.querySelector('button[onclick="doLogout()"]').style.display = 'none';
-  document.getElementById('successScreen').classList.add('show');
-
-  toast('ok','Checked In!', 'Your visit has been recorded.');
-
-  // Auto-logout countdown (8 seconds)
-  let secs = 8;
+  let secs = 3;
   document.getElementById('countdownNum').textContent = secs;
   document.getElementById('countdownBar').style.width = '100%';
-  // trigger the CSS transition
+  document.getElementById('countdownBar').style.transition = 'none';
   setTimeout(() => {
-    document.getElementById('countdownBar').style.width = '0%';
     document.getElementById('countdownBar').style.transition = `width ${secs}s linear`;
+    document.getElementById('countdownBar').style.width = '0%';
   }, 50);
 
-  countdownTimer = setInterval(async () => {
+  const timer = setInterval(async () => {
     secs--;
     document.getElementById('countdownNum').textContent = secs;
     if (secs <= 0) {
-      clearInterval(countdownTimer);
-      countdownTimer = null;
+      clearInterval(timer);
       await logout();
       window.location.href = 'index.html';
     }
   }, 1000);
 }
 
-window.cancelCountdownAndReset = () => {
-  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-  resetCheckin();
-};
-
-window.resetCheckin = () => {
-  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-  selectedReasons.clear();
-  document.querySelectorAll('.reason-tile').forEach(t => t.classList.remove('active'));
-  document.getElementById('othersText').value = '';
-  document.getElementById('othersBox').classList.remove('show');
-
-  document.querySelectorAll(
-    '.welcome-banner, .section-head, .reason-grid, #btnCheckin'
-  ).forEach(el => el.style.display = '');
-  // Show sign out button again
-  document.querySelector('button[onclick="doLogout()"]').style.display = '';
-  const btn = document.getElementById('btnCheckin');
-  btn.disabled = false; btn.innerHTML = '✅ &nbsp;Confirm Check-In';
-  document.getElementById('successScreen').classList.remove('show');
-  // Reset countdown bar
-  document.getElementById('countdownBar').style.transition = 'none';
-  document.getElementById('countdownBar').style.width = '100%';
-};
-
-window.doLogout = async () => {
-  await logout();
-  window.location.href = 'index.html';
-};
-
-function toast(type, title, body='') {
-  const icons = { ok:'✅', err:'❌', warn:'⚠️', info:'ℹ️' };
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span>
-    <div class="toast-text"><div class="toast-title">${title}</div>${body?`<div class="toast-body">${body}</div>`:''}</div>`;
-  document.getElementById('toasts').appendChild(el);
-  setTimeout(() => el.remove(), 4000);
-}
+window.doLogout = async () => { await logout(); window.location.href = 'index.html'; };
 </script>
 </body>
 </html>

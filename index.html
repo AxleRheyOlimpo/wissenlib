@@ -1,36 +1,27 @@
 <!DOCTYPE html>
 <html lang="en" data-mode="light" data-palette="golden">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>WissenLib — NEU Library Visitor Log</title>
-<link rel="stylesheet" href="css/styles.css" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>WissenLib — NEU Library</title>
+<link rel="stylesheet" href="css/styles.css"/>
 <style>
-  /* index-specific overrides */
-  .form-panel { display: none; }
-  .form-panel.active { display: block; }
-
-  .method-panel { display: none; }
-  .method-panel.active { display: block; }
-
-  .strength-bar { height: 3px; border-radius: 2px; margin-top: .35rem; transition: all .3s; }
-  .err-msg { font-size: .775rem; color: var(--err); margin-top: .3rem; display: none; }
-  .err-msg.show { display: block; }
-
-  .progress-wrap { margin-top: 1.25rem; }
-  .reg-steps { display: flex; gap: .375rem; margin-bottom: 1.25rem; }
-  .reg-step {
-    flex: 1; height: 4px; border-radius: 2px;
-    background: var(--border); transition: background .3s;
+  .login-card { text-align:center; max-width:360px; }
+  .login-logo { width:80px;height:80px;object-fit:contain;margin:0 auto .875rem;display:block;border-radius:.75rem; }
+  .login-logo-fallback {
+    width:80px;height:80px;background:var(--p);border-radius:.875rem;
+    display:flex;align-items:center;justify-content:center;font-size:2.5rem;
+    margin:0 auto .875rem;
   }
-  .reg-step.done { background: var(--p); }
-
-  .google-icon { width: 18px; height: 18px; vertical-align: middle; }
+  .login-clock {
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:var(--radius);padding:.75rem 1.25rem;margin-bottom:1.5rem;
+  }
+  .google-icon { width:18px;height:18px;vertical-align:middle;flex-shrink:0; }
 </style>
 </head>
 <body>
 
-<!-- ── Slideshow Background ──────────────────────────────── -->
 <div class="slideshow" aria-hidden="true">
   <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img1.jpg')"></div>
   <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img2.jpg')"></div>
@@ -40,227 +31,69 @@
   <div class="slide-overlay"></div>
 </div>
 
-<!-- ── Theme Bar ─────────────────────────────────────────── -->
 <div id="themeBar" class="theme-bar"></div>
-
-<!-- ── Toast ─────────────────────────────────────────────── -->
 <div id="toasts"></div>
 
-<!-- ── Auth Card ─────────────────────────────────────────── -->
 <div class="auth-page">
-  <div class="auth-card">
+  <div class="auth-card login-card" id="loginCard">
 
     <!-- Logo -->
-    <div class="logo-block">
-      <div class="logo-icon">📚</div>
-      <div class="logo-text">
-        <div class="app-name">WissenLib</div>
-        <div class="app-sub">NEU Library Visitor Log</div>
-      </div>
+    <img src="images/logo.png" class="login-logo" alt="NEU Logo"
+      onerror="this.style.display='none';document.getElementById('logoFb').style.display='flex'"/>
+    <div class="login-logo-fallback" id="logoFb" style="display:none;">📚</div>
+
+    <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.025em;color:var(--text);margin-bottom:.2rem;">WissenLib</div>
+    <div style="font-size:.775rem;color:var(--muted);margin-bottom:1.5rem;">NEU Library Visitor Log System</div>
+
+    <!-- Clock -->
+    <div class="login-clock">
+      <div id="loginDate" style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.15rem;"></div>
+      <div id="loginTime" style="font-size:1.35rem;font-weight:800;color:var(--p);font-variant-numeric:tabular-nums;"></div>
     </div>
 
-    <!-- Login / Register toggle -->
-    <div class="tabs" role="tablist">
-      <button class="tab active" id="tabLogin" role="tab" onclick="switchPanel('login')">Sign In</button>
-      <button class="tab"        id="tabReg"   role="tab" onclick="switchPanel('register')">Register</button>
-    </div>
+    <!-- Google Sign In -->
+    <button class="btn btn-google btn-full" onclick="doGoogleLogin()" id="btnGoogle" style="padding:.9rem;font-size:.875rem;gap:.625rem;">
+      <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
+    <div style="font-size:.71rem;color:var(--muted);margin-top:.5rem;">NEU institutional accounts only (@neu.edu.ph)</div>
 
-    <!-- ══ LOGIN PANEL ══════════════════════════════════════ -->
-    <div class="form-panel active" id="panelLogin">
+    <div id="loginErr" style="font-size:.8rem;color:var(--err);margin-top:.75rem;display:none;padding:.625rem;background:var(--surface2);border-radius:var(--radius-sm);"></div>
 
-      <!-- Email/ID method -->
-      <div id="mpCred">
-        <div class="field">
-          <label for="loginInput">Student ID or Institutional Email</label>
-          <div class="inp-icon-wrap">
-            <span class="inp-icon">👤</span>
-            <input class="inp" id="loginInput" type="text"
-              placeholder="26-12345-678 or name@neu.edu.ph" autocomplete="username" />
-          </div>
-        </div>
-        <div class="field">
-          <label for="loginPass">Password</label>
-          <div class="inp-icon-wrap" style="position:relative;">
-            <span class="inp-icon">🔒</span>
-            <input class="inp" id="loginPass" type="password"
-              placeholder="Your password" autocomplete="current-password" />
-            <button type="button" onclick="togglePw('loginPass',this)"
-              style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;">👁</button>
-          </div>
-        </div>
-        <div class="err-msg" id="loginErr"></div>
-        <button class="btn btn-primary btn-full mt-2" id="btnLogin" onclick="doLogin()">
-          Sign In
-        </button>
-      </div>
+  </div>
+</div>
 
-      <div class="divider">or continue with</div>
-
-      <button class="btn btn-google" onclick="doGoogleLogin()">
-        <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-        </svg>
-        Continue with Google (@neu.edu.ph)
-      </button>
-
-    </div><!-- /panelLogin -->
-
-    <!-- ══ REGISTER PANEL ════════════════════════════════════ -->
-    <div class="form-panel" id="panelRegister">
-
-      <!-- Step progress indicator -->
-      <div class="reg-steps">
-        <div class="reg-step done" id="rs1"></div>
-        <div class="reg-step"      id="rs2"></div>
-        <div class="reg-step"      id="rs3"></div>
-      </div>
-
-      <!-- Step 1: Identity -->
-      <div class="method-panel active" id="regStep1">
-        <p class="section-head">Step 1 of 3 — Identity</p>
-
-        <div class="field">
-          <label for="rStudentId">Student ID <span style="color:var(--muted);font-weight:400;">(format: yy-xxxxx-xxx)</span></label>
-          <input class="inp" id="rStudentId" type="text" placeholder="26-12345-678"
-            oninput="fmtStudentId(this)" maxlength="13" />
-          <div class="err-msg" id="errStudentId">Invalid format. Use yy-xxxxx-xxx</div>
-        </div>
-
-        <div class="field-row-3">
-          <div>
-            <label for="rFirst">First Name</label>
-            <input class="inp" id="rFirst" type="text" placeholder="Juan" />
-          </div>
-          <div>
-            <label for="rLast">Last Name</label>
-            <input class="inp" id="rLast" type="text" placeholder="Dela Cruz" />
-          </div>
-          <div>
-            <label for="rMI">M.I.</label>
-            <input class="inp" id="rMI" type="text" placeholder="A." maxlength="3" />
-          </div>
-        </div>
-
-        <label class="check-row" style="margin-bottom:1rem;">
-          <input type="checkbox" id="rIsEmployee" onchange="toggleEmployeeMode(this.checked)" />
-          <span>I am faculty / staff</span>
-        </label>
-
-        <div class="err-msg" id="errStep1"></div>
-        <button class="btn btn-primary btn-full" onclick="regNext(1)">Continue →</button>
-      </div>
-
-      <!-- Step 2: Department & Program -->
-      <div class="method-panel" id="regStep2">
-        <p class="section-head">Step 2 of 3 — College & Program</p>
-
-        <div class="field">
-          <label for="rDept">College / Department</label>
-          <select class="inp" id="rDept" onchange="fillPrograms(this.value)">
-            <option value="">— Select Department —</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="rProg">Program</label>
-          <select class="inp" id="rProg">
-            <option value="">— Select Program —</option>
-          </select>
-        </div>
-
-        <div class="err-msg" id="errStep2"></div>
-        <div style="display:flex;gap:.75rem;">
-          <button class="btn btn-ghost" onclick="regBack(2)" style="flex:0 0 auto;">← Back</button>
-          <button class="btn btn-primary btn-full" onclick="regNext(2)">Continue →</button>
-        </div>
-      </div>
-
-      <!-- Step 3: Account credentials -->
-      <div class="method-panel" id="regStep3">
-        <p class="section-head">Step 3 of 3 — Account</p>
-
-        <!-- Google verified indicator (shown only in Google reg mode) -->
-        <div id="googleVerifiedBanner" class="hidden" style="
-          display:flex; align-items:center; gap:.5rem;
-          background:#DCFCE7; border:1px solid #16A34A;
-          border-radius:var(--radius-sm); padding:.5rem .875rem;
-          margin-bottom:.75rem; font-size:.8rem; font-weight:600; color:#15803D;
-        ">
-          ✔ Email verified via Google — <span id="googleVerifiedEmail" style="font-weight:400;"></span>
-        </div>
-
-        <div class="field" id="emailSection">
-          <label for="rEmail">Institutional Email</label>
-          <div class="inp-icon-wrap">
-            <span class="inp-icon">✉️</span>
-            <input class="inp" id="rEmail" type="email" placeholder="name@neu.edu.ph" />
-          </div>
-          <div class="err-msg" id="errEmail">Must be an @neu.edu.ph address</div>
-        </div>
-        <div class="field" id="passSection">
-          <label for="rPass">Password <span style="color:var(--muted);font-weight:400;">(min. 8 characters)</span></label>
-          <div class="inp-icon-wrap" style="position:relative;">
-            <span class="inp-icon">🔒</span>
-            <input class="inp" id="rPass" type="password" placeholder="Create a strong password"
-              oninput="checkStrength(this.value)" />
-            <button type="button" onclick="togglePw('rPass',this)"
-              style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;">👁</button>
-          </div>
-          <div class="strength-bar" id="strengthBar" style="background:var(--border);"></div>
-          <div style="font-size:.75rem;color:var(--muted);margin-top:.25rem;" id="strengthLabel"></div>
-        </div>
-        <div class="field" id="confirmSection">
-          <label for="rConfirm">Confirm Password</label>
-          <div class="inp-icon-wrap" style="position:relative;">
-            <span class="inp-icon">🔒</span>
-            <input class="inp" id="rConfirm" type="password" placeholder="Repeat your password" />
-            <button type="button" onclick="togglePw('rConfirm',this)"
-              style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;">👁</button>
-          </div>
-        </div>
-
-        <div class="err-msg" id="errStep3"></div>
-        <div style="display:flex;gap:.75rem;">
-          <button class="btn btn-ghost" onclick="regBack(3)" style="flex:0 0 auto;">← Back</button>
-          <button class="btn btn-primary btn-full" id="btnRegister" onclick="doRegister()">Create Account</button>
-        </div>
-
-      </div>
-
-    </div><!-- /panelRegister -->
-
-  </div><!-- /auth-card -->
-</div><!-- /auth-page -->
-
-<!-- ── Script ─────────────────────────────────────────────── -->
 <script type="module">
 import { initTheme, buildThemeBar } from './js/theme.js';
 import { auth } from './js/firebase-config.js';
-import {
-  loginWithGoogle, loginWithCredentials,
-  registerUser, createUserDocOnly,
-  getUserRole, getUserData, onAuthChange, logout
-} from './js/auth.js';
-import { DEPARTMENTS } from './js/firebase-config.js';
+import { loginWithGoogle, getUserData, getUserRole, onAuthChange, logout } from './js/auth.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// ── Theme setup ─────────────────────────────────────────────
 const { mode, palette } = initTheme();
 buildThemeBar(mode, palette);
 
-// ── If already logged in, redirect ──────────────────────────
-let googleLoginPending = false; // blocks onAuthChange during Google popup
-let pendingGoogleUser  = null;  // stores Google user awaiting registration
+// Clock
+function tick() {
+  const now = new Date();
+  const d = document.getElementById('loginDate');
+  const t = document.getElementById('loginTime');
+  if (d) d.textContent = now.toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  if (t) t.textContent = now.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+}
+tick(); setInterval(tick, 1000);
 
-onAuthChange(async user => {
-  if (googleLoginPending) return;
+// Auto-redirect if already signed in
+onAuthStateChanged(auth, async user => {
   if (!user) return;
   try {
-    // Check if Firestore doc exists — if not, sign out (deleted account)
     const data = await getUserData(user.uid);
     if (!data) {
-      await logout();
+      window.location.href = 'register.html';
       return;
     }
     const role = await getUserRole(user.uid);
@@ -269,333 +102,55 @@ onAuthChange(async user => {
     } else {
       window.location.href = 'checkin.html';
     }
-  } catch (e) {
-    showToast('err', 'Account Blocked', e.message);
+  } catch(e) {
     await logout();
   }
 });
 
+function gSvg() {
+  return `<svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>`;
+}
+
 function showAdminChoice(user) {
-  const card = document.querySelector('.auth-card');
-  const firstName = user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Admin';
+  const card = document.getElementById('loginCard');
+  const name = (user.displayName || user.email).split(' ')[0];
   card.innerHTML = `
-    <div class="logo-block">
-      <div class="logo-icon">📚</div>
-      <div class="logo-text">
-        <div class="app-name">WissenLib</div>
-        <div class="app-sub">NEU Library Visitor Log</div>
-      </div>
-    </div>
-    <div style="text-align:center;margin-bottom:1.5rem;">
-      <div style="font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:.25rem;">
-        Welcome back, ${firstName}!
-      </div>
-      <div style="font-size:.825rem;color:var(--muted);">
-        You're signed in as an administrator.<br>Where would you like to go?
-      </div>
+    <img src="images/logo.png" class="login-logo" alt="NEU Logo" onerror="this.style.display='none'"/>
+    <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.025em;color:var(--text);margin-bottom:.2rem;">WissenLib</div>
+    <div style="margin:1.25rem 0 1.5rem;">
+      <div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:.25rem;">Welcome back, ${name}!</div>
+      <div style="font-size:.825rem;color:var(--muted);">Where would you like to go?</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:.75rem;">
-      <button onclick="window.location.href='admin.html'" class="btn btn-primary btn-full" style="padding:1rem;font-size:.9rem;">
-        Admin Dashboard
-      </button>
-      <button onclick="window.location.href='checkin.html?mode=visitor'" class="btn btn-ghost btn-full" style="padding:1rem;font-size:.9rem;">
-        Check In as Visitor
-      </button>
-      <button onclick="doAdminLogout()" style="
-        padding:.5rem; background:none; border:none; cursor:pointer;
-        font-size:.78rem; color:var(--muted); text-decoration:underline; margin-top:.25rem;
-      ">Sign out</button>
-    </div>
-  `;
+      <button onclick="window.location.href='admin.html'" class="btn btn-primary btn-full" style="padding:1rem;">Admin Dashboard</button>
+      <button onclick="window.location.href='checkin.html?mode=visitor'" class="btn btn-ghost btn-full" style="padding:1rem;">Check In as Visitor</button>
+      <button onclick="doAdminLogout()" style="padding:.5rem;background:none;border:none;cursor:pointer;font-size:.78rem;color:var(--muted);text-decoration:underline;margin-top:.25rem;">Sign out</button>
+    </div>`;
 }
 
-window.doAdminLogout = async () => {
-  await logout();
-  window.location.href = 'index.html';
-};
-
-// ── Panel / tab switching ────────────────────────────────────
-window.switchPanel = (p) => {
-  ['login','register'].forEach(n => {
-    document.getElementById('panel' + n.charAt(0).toUpperCase() + n.slice(1))
-      .classList.toggle('active', n === p);
-    document.getElementById('tab' + (n === 'login' ? 'Login' : 'Reg'))
-      .classList.toggle('active', n === p);
-  });
-  // Reset Google mode if switching away from register
-  if (p === 'login' && pendingGoogleUser) {
-    logout();
-    pendingGoogleUser  = null;
-    googleLoginPending = false;
-    resetGoogleRegMode();
-  }
-};
-
-// ── REGISTER ─────────────────────────────────────────────────
-window.doLogin = async () => {
-  const btn  = document.getElementById('btnLogin');
-  const inp  = document.getElementById('loginInput').value.trim();
-  const pass = document.getElementById('loginPass').value;
-  const err  = document.getElementById('loginErr');
-
-  if (!inp || !pass) { showErr(err, 'Please fill in all fields.'); return; }
-  err.classList.remove('show');
-  setLoading(btn, true);
-
-  try {
-    await loginWithCredentials(inp, pass);
-    // redirect handled by onAuthChange
-  } catch (e) {
-    showErr(err, e.message);
-    setLoading(btn, false);
-  }
-};
+window.doAdminLogout = async () => { await logout(); window.location.href = 'index.html'; };
 
 window.doGoogleLogin = async () => {
-  googleLoginPending = true;
+  const btn = document.getElementById('btnGoogle');
+  const err = document.getElementById('loginErr');
+  if (!btn) return;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Signing in…';
+  err.style.display = 'none';
   try {
     await loginWithGoogle();
-    googleLoginPending = false;
-  } catch (e) {
+    // onAuthStateChanged handles redirect
+  } catch(e) {
     if (e.message === 'NO_ACCOUNT') {
-      // Keep Google session — user is authenticated, just needs profile completion
-      pendingGoogleUser = { uid: e.uid, email: e.email };
-
-      const parts = (e.firstName + (e.lastName ? ' ' + e.lastName : '')).trim().split(/\s+/);
-      const firstName = parts[0] || '';
-      const lastName  = parts.length > 1 ? parts[parts.length - 1] : '';
-
-      // Go to register, start at step 1 with pre-filled name
-      switchPanel('register');
-      goStep(1);
-      document.getElementById('rFirst').value = firstName;
-      document.getElementById('rLast').value  = lastName;
-
-      // On step 3: show verified badge, hide only the email field (keep password)
-      document.getElementById('googleVerifiedBanner').classList.remove('hidden');
-      document.getElementById('googleVerifiedEmail').textContent = e.email;
-      document.getElementById('emailSection').style.display = 'none';
-      document.getElementById('btnRegister').textContent = 'Complete Registration';
-
-      showToast('info', 'Almost there!', 'Fill in your remaining details to complete registration.');
+      window.location.href = 'register.html';
     } else {
-      googleLoginPending = false;
-      showToast('err', 'Sign-in Failed', e.message);
+      err.textContent = e.message;
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = gSvg() + ' Continue with Google';
     }
   }
 };
-
-// ── REGISTER ─────────────────────────────────────────────────
-let currentStep = 1;
-
-// Populate departments
-const deptSel = document.getElementById('rDept');
-Object.keys(DEPARTMENTS).forEach(d => {
-  const opt = document.createElement('option');
-  opt.value = d; opt.textContent = d;
-  deptSel.appendChild(opt);
-});
-
-window.fillPrograms = (dept) => {
-  const sel = document.getElementById('rProg');
-  sel.innerHTML = '<option value="">— Select Program —</option>';
-  (DEPARTMENTS[dept] || []).forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p; opt.textContent = p;
-    sel.appendChild(opt);
-  });
-};
-
-window.toggleEmployeeMode = (on) => {
-  const idField = document.getElementById('rStudentId');
-  idField.disabled = on;
-  if (on) {
-    idField.value = '';
-    // pre-select ADMIN/Staff dept
-    deptSel.value = 'ADMIN / Staff';
-    window.fillPrograms('ADMIN / Staff');
-  }
-};
-
-window.regNext = (step) => {
-  if (step === 1) {
-    const first = document.getElementById('rFirst').value.trim();
-    const last  = document.getElementById('rLast').value.trim();
-    const sid   = document.getElementById('rStudentId').value.trim();
-    const isEmp = document.getElementById('rIsEmployee').checked;
-    const err   = document.getElementById('errStep1');
-    err.classList.remove('show');
-
-    if (!first || !last) { showErr(err, 'First and last name are required.'); return; }
-    if (!isEmp && sid && !/^\d{2}-\d{5}-\d{3}$/.test(sid)) {
-      document.getElementById('errStudentId').classList.add('show'); return;
-    }
-    goStep(2);
-  } else if (step === 2) {
-    const dept = document.getElementById('rDept').value;
-    const prog = document.getElementById('rProg').value;
-    const err  = document.getElementById('errStep2');
-    err.classList.remove('show');
-    if (!dept || !prog) { showErr(err, 'Please select your department and program.'); return; }
-    goStep(3);
-  }
-};
-
-window.regBack = (step) => goStep(step - 1);
-
-function goStep(n) {
-  [1,2,3].forEach(i => {
-    document.getElementById('regStep' + i).classList.toggle('active', i === n);
-    document.getElementById('rs' + i).classList.toggle('done', i <= n);
-  });
-  currentStep = n;
-}
-
-window.doRegister = async () => {
-  const err     = document.getElementById('errStep3');
-  const emailErr= document.getElementById('errEmail');
-  emailErr.classList.remove('show');
-  err.classList.remove('show');
-
-  const commonFields = {
-    studentId:     document.getElementById('rStudentId').value,
-    firstName:     document.getElementById('rFirst').value.trim(),
-    lastName:      document.getElementById('rLast').value.trim(),
-    middleInitial: document.getElementById('rMI').value.trim(),
-    department:    document.getElementById('rDept').value,
-    program:       document.getElementById('rProg').value,
-    isEmployee:    document.getElementById('rIsEmployee').checked,
-    rfidId:        null
-  };
-
-  const btn = document.getElementById('btnRegister');
-  setLoading(btn, true);
-
-  try {
-    if (pendingGoogleUser) {
-      // Validate password
-      const pass    = document.getElementById('rPass').value;
-      const confirm = document.getElementById('rConfirm').value;
-      if (pass.length < 8) { showErr(err, 'Password must be at least 8 characters.'); setLoading(btn, false); return; }
-      if (pass !== confirm){ showErr(err, 'Passwords do not match.'); setLoading(btn, false); return; }
-
-      // Link email+password credential to the existing Google account
-      try {
-        const { EmailAuthProvider, linkWithCredential } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
-        const credential = EmailAuthProvider.credential(pendingGoogleUser.email, pass);
-        await linkWithCredential(auth.currentUser, credential);
-      } catch (linkErr) {
-        // Already linked from a previous attempt — that's fine, continue
-        if (linkErr.code !== 'auth/provider-already-linked' &&
-            linkErr.code !== 'auth/email-already-in-use') {
-          throw linkErr;
-        }
-      }
-
-      // Save Firestore doc
-      await createUserDocOnly(pendingGoogleUser.uid, {
-        email: pendingGoogleUser.email,
-        ...commonFields
-      });
-      pendingGoogleUser  = null;
-      googleLoginPending = false;
-      showToast('ok', 'Account Created!', 'Welcome to WissenLib. Signing you in…');
-      const role = await getUserRole(auth.currentUser.uid);
-      if (role === 'admin') {
-        showAdminChoice(auth.currentUser);
-      } else {
-        window.location.href = 'checkin.html';
-      }
-    } else {
-      // Normal email/password registration
-      const email   = document.getElementById('rEmail').value.trim();
-      const pass    = document.getElementById('rPass').value;
-      const confirm = document.getElementById('rConfirm').value;
-
-      if (!email.toLowerCase().endsWith('@neu.edu.ph')) {
-        emailErr.classList.add('show'); setLoading(btn, false); return;
-      }
-      if (pass.length < 8) { showErr(err, 'Password must be at least 8 characters.'); setLoading(btn, false); return; }
-      if (pass !== confirm){ showErr(err, 'Passwords do not match.'); setLoading(btn, false); return; }
-
-      await registerUser({ email, password: pass, ...commonFields });
-      showToast('ok', 'Account Created!', 'Welcome to WissenLib. Signing you in…');
-      // redirect via onAuthChange
-    }
-  } catch (e) {
-    showErr(err, e.message);
-    setLoading(btn, false);
-  }
-};
-
-// ── Helpers ──────────────────────────────────────────────────
-function resetGoogleRegMode() {
-  document.getElementById('googleVerifiedBanner').classList.add('hidden');
-  document.getElementById('emailSection').style.display = '';
-  document.getElementById('btnRegister').textContent = 'Create Account';
-  const emailInp = document.getElementById('rEmail');
-  emailInp.value    = '';
-  emailInp.readOnly = false;
-  emailInp.style.background = '';
-}
-
-window.fmtStudentId = (inp) => {
-  let v = inp.value.replace(/\D/g,'');
-  if (v.length > 2)  v = v.slice(0,2) + '-' + v.slice(2);
-  if (v.length > 8)  v = v.slice(0,8) + '-' + v.slice(8);
-  inp.value = v.slice(0, 13);
-  document.getElementById('errStudentId').classList.toggle('show',
-    v.replace(/-/g,'').length === 10 && !/^\d{2}-\d{5}-\d{3}$/.test(v)
-  );
-};
-
-window.togglePw = (id, btn) => {
-  const inp = document.getElementById(id);
-  const isText = inp.type === 'text';
-  inp.type = isText ? 'password' : 'text';
-  btn.textContent = isText ? '👁' : '🙈';
-};
-
-window.checkStrength = (val) => {
-  const bar = document.getElementById('strengthBar');
-  const lbl = document.getElementById('strengthLabel');
-  if (!val) { bar.style.background = 'var(--border)'; bar.style.width = '0'; lbl.textContent = ''; return; }
-  let score = 0;
-  if (val.length >= 8)  score++;
-  if (/[A-Z]/.test(val)) score++;
-  if (/[0-9]/.test(val)) score++;
-  if (/[^A-Za-z0-9]/.test(val)) score++;
-  const colors = ['var(--err)','var(--warn)','#EAB308','var(--ok)'];
-  const labels = ['Weak','Fair','Good','Strong'];
-  bar.style.background = colors[score-1] || 'var(--border)';
-  bar.style.height = '3px';
-  lbl.textContent = labels[score-1] || '';
-  lbl.style.color = colors[score-1] || 'var(--muted)';
-};
-
-function showErr(el, msg) {
-  el.textContent = msg;
-  el.classList.add('show');
-}
-
-function setLoading(btn, on) {
-  btn.disabled = on;
-  btn.innerHTML = on ? '<span class="spin"></span> Please wait…' : btn.dataset.orig || btn.innerHTML;
-  if (!btn.dataset.orig && on) btn.dataset.orig = btn.innerHTML;
-}
-
-// Toast system
-function showToast(type, title, body='', dur=4000) {
-  const icons = { ok:'✅', err:'❌', warn:'⚠️', info:'ℹ️' };
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span>
-    <div class="toast-text"><div class="toast-title">${title}</div>${body?`<div class="toast-body">${body}</div>`:''}
-    </div>`;
-  document.getElementById('toasts').appendChild(el);
-  setTimeout(() => el.remove(), dur);
-}
-window.showToast = showToast;
 </script>
 </body>
 </html>
