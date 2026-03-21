@@ -9,7 +9,40 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
 <style>
-  body { overflow:hidden; }
+  body { overflow:hidden; background:var(--bg); }
+
+  /* ── Slideshow ───────────────────────────────── */
+  .slideshow { position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none; }
+  .slide { position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;animation:fadeSlide 30s infinite;will-change:opacity; }
+  .slide:nth-child(1){animation-delay:0s}.slide:nth-child(2){animation-delay:6s}
+  .slide:nth-child(3){animation-delay:12s}.slide:nth-child(4){animation-delay:18s}
+  .slide:nth-child(5){animation-delay:20s}.slide:nth-child(6){animation-delay:25s}
+  @keyframes fadeSlide{0%{opacity:0}6%{opacity:1}20%{opacity:1}26%{opacity:0}100%{opacity:0}}
+  .slide-overlay{position:absolute;inset:0;background:var(--overlay);backdrop-filter:blur(3px);}
+
+  /* Lift all admin UI above slideshow */
+  .admin-layout, #toasts, .modal-bg { position:relative; z-index:10; }
+
+  /* Glass sidebar */
+  .sidebar {
+    background: var(--glass) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border-right-color: var(--glass-b) !important;
+  }
+  /* Glass topbar */
+  .admin-topbar {
+    background: var(--glass) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-bottom-color: var(--glass-b) !important;
+  }
+  /* Slightly frosted content cards */
+  .stat-card, .chart-wrap, .filter-bar, .table-wrap {
+    background: var(--glass) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
   .admin-main { overflow-y:auto; height:100vh; }
   .role-badge {
     display:inline-flex;align-items:center;gap:.375rem;
@@ -43,6 +76,17 @@
 <body>
 
 <div id="toasts"></div>
+
+<!-- Slideshow background -->
+<div class="slideshow" aria-hidden="true">
+  <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img1.jpg')"></div>
+  <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img2.jpg')"></div>
+  <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img3.jpg')"></div>
+  <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img4.jpg')"></div>
+  <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img5.jpg')"></div>
+  <div class="slide" style="background-image:url('https://raw.githubusercontent.com/AxleRheyOlimpo/wissenlib/main/images/img6.jpg')"></div>
+  <div class="slide-overlay"></div>
+</div>
 
 <!-- Block modal -->
 <div class="modal-bg" id="blockModal">
